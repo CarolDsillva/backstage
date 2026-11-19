@@ -222,5 +222,6 @@ export async function loadHistory(channelId: string, pageSize = 50): Promise<Cha
   });
   const r = await q.loadNextPage();
   if (!r.isOk || !r.data) return [];
-  return r.data.data.map(toChatMsg).reverse();
+  // Don't trust page order: sort oldest → newest by send time.
+  return r.data.data.map(toChatMsg).sort((a, b) => a.sentAt - b.sentAt);
 }

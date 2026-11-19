@@ -39,4 +39,4 @@ Routes: `/e/<slug>` (the room), `/e/<slug>/screen` (the stage screen), `/e/<slug
 
 ## Stack
 
-Next.js 16 · TypeScript · Tailwind 4 · Nexconn Web Chat SDK · Supabase Postgres · Gemini 2.5 Flash · Vercel.
+Next.js 16 · TypeScript · Tailwind 4 · Nexconn Web Chat SDK · Supabase Postgres · Gemini 3.5 Flash-Lite · Vercel.

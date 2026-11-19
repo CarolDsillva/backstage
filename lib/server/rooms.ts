@@ -34,13 +34,17 @@ import * as dbm from './db';
 import * as nx from './nexconn';
 import { SYSTEM_USER_ID } from '@/lib/shared/types';
 
+let systemReady: Promise<string> | null = null;
+
 /** Idempotent: one Nexconn group per (type, ctxId), recorded in the channels table. */
 export async function ensureChannel(type: ContextType, ctxId: string, name: string, _owner: string) {
   const existing = await dbm.getChannel(type, ctxId);
   if (existing) return existing;
   const channelId = channelIdFor(type, ctxId);
   // System user owns rooms so ownership never depends on who joined first.
-  await nx.issueToken(SYSTEM_USER_ID, 'Backstage');
+  // Issuing a token registers the user; once per server instance is enough.
+  systemReady ??= nx.issueToken(SYSTEM_USER_ID, 'Backstage').catch((e) => { systemReady = null; throw e; });
+  await systemReady;
   await nx.createGroup(channelId, name, SYSTEM_USER_ID, []); // callers join members explicitly
   await dbm.saveChannel(type, ctxId, channelId);
   return channelId;

@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 // Every screen is live per-user data, so we opt out of build-time prerendering/caching.
 const nextConfig: NextConfig = {
+  // Dev only: lets a second local session on 127.0.0.1 (separate cookies) load the app.
+  allowedDevOrigins: ["127.0.0.1"],
   turbopack: {
     rules: {
       "*.css": {

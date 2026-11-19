@@ -29,9 +29,8 @@ export async function requireMember(slug: string, allowed?: Role[]): Promise<Ctx
   if (!userId) throw new HttpError(401, 'Join the gig first');
   const ev = await getEventBySlug(slug);
   if (!ev) throw new HttpError(404, 'Gig not found');
-  const role = await getRole(ev.id, userId);
+  const [role, user] = await Promise.all([getRole(ev.id, userId), getUser(userId)]);
   if (!role) throw new HttpError(401, 'Join the gig first');
   if (allowed && !allowed.includes(role)) throw new HttpError(403, 'Not allowed for your role');
-  const user = await getUser(userId);
   return { ev, userId, name: user?.name ?? 'Someone', role };
 }

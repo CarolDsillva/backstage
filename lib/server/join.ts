@@ -42,26 +42,31 @@ export function makeJoin(d: JoinDeps) {
     const ev = await d.getEvent(slug);
     if (!ev) throw new HttpError(404, 'Gig not found');
 
-    const known = existingUserId ? await d.getUser(existingUserId) : null;
+    // Independent steps run in parallel: each round trip is ~0.4 s on a far-away database.
+    const [known, existingRole] = existingUserId
+      ? await Promise.all([d.getUser(existingUserId), d.getRole(ev.id, existingUserId)])
+      : [null, null];
     const userId = known?.id ?? d.newId();
-    await d.upsertUser(userId, name);
-
-    const prev = await d.getRole(ev.id, userId);
+    const prev = known ? existingRole : null;
     const role = mergeRole(prev, roleForCode(ev, code));
-    if (role !== prev) await d.setRole(ev.id, userId, role);
+    const staff = isStaff(role);
 
-    const gigChannelId = await d.ensureChannel('gig', ev.id, ev.title, userId);
-    await d.joinGroup(gigChannelId, [userId]);
+    const [gigChannelId, crewChannelId, token] = await Promise.all([
+      d.ensureChannel('gig', ev.id, ev.title, userId),
+      staff ? d.ensureChannel('crew', ev.id, `${ev.title} · Crew`, userId) : Promise.resolve(null),
+      d.issueToken(userId, name),
+      (async () => {
+        await d.upsertUser(userId, name); // the membership row references the user row
+        if (role !== prev) await d.setRole(ev.id, userId, role);
+      })(),
+    ]);
 
-    let crewChannelId: string | null = null;
-    if (isStaff(role)) {
-      crewChannelId = await d.ensureChannel('crew', ev.id, `${ev.title} · Crew`, userId);
-      await d.joinGroup(crewChannelId, [userId]);
+    await Promise.all([
+      d.joinGroup(gigChannelId, [userId]),
+      crewChannelId ? d.joinGroup(crewChannelId, [userId]) : null,
       // Crew who arrive mid-show must be able to open reports filed before they joined.
-      for (const ch of await d.openIncidentChannels(ev.id)) await d.joinGroup(ch, [userId]);
-    }
-
-    const token = await d.issueToken(userId, name);
+      staff ? d.openIncidentChannels(ev.id).then((chs) => Promise.all(chs.map((ch) => d.joinGroup(ch, [userId])))) : null,
+    ]);
     return { userId, name, role, token, gigChannelId, crewChannelId };
   };
 }

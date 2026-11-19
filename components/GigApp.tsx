@@ -25,9 +25,10 @@ export function GigApp({ slug }: { slug: string }) {
   const [tab, setTab] = useState<Tab>('room');
   const [newCard, setNewCard] = useState(false);
   const [reportPlace, setReportPlace] = useState<string | null | undefined>(undefined);
+  const [joinToken, setJoinToken] = useState<string | undefined>(undefined);
 
   const me = useMemo(
-    () => (state ? { userId: state.me.userId, name: state.me.name, appKey: APP_KEY } : null),
+    () => (state ? { userId: state.me.userId, name: state.me.name, appKey: APP_KEY, token: joinToken } : null),
     [state?.me.userId, state?.me.name], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const room = useRoom(state?.channels.gig ?? null, me, slug);
@@ -36,7 +37,7 @@ export function GigApp({ slug }: { slug: string }) {
   const { onState } = room;
   useEffect(() => onState(() => void refetch()), [onState, refetch]);
 
-  if (status === 'join') return <JoinScreen slug={slug} onJoined={refetch} />;
+  if (status === 'join') return <JoinScreen slug={slug} onJoined={(t) => { setJoinToken(t); void refetch(); }} />;
   if (status === 'notfound') return <Centered title="This gig doesn’t exist" body="Check the link or scan the QR code at the venue again." />;
   if (status === 'error') return <Centered title="Can’t reach Backstage" body="Check your connection, then reload the page." action={{ label: 'Try again', onClick: refetch }} />;
   if (!state) return <Centered title="Getting the room ready…" />;

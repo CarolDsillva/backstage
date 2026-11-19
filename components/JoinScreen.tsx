@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { postJson } from '@/lib/client/useEventState';
 
-export function JoinScreen({ slug, title, onJoined }: { slug: string; title?: string; onJoined: () => void }) {
+export function JoinScreen({ slug, title, onJoined }: { slug: string; title?: string; onJoined: (token?: string) => void }) {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [showCode, setShowCode] = useState(false);
@@ -14,8 +14,8 @@ export function JoinScreen({ slug, title, onJoined }: { slug: string; title?: st
     setBusy(true);
     setError('');
     try {
-      await postJson('/api/join', { slug, name, code: code || undefined });
-      onJoined();
+      const r = await postJson<{ token: string }>('/api/join', { slug, name, code: code || undefined });
+      onJoined(r.token);
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);

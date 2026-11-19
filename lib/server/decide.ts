@@ -51,11 +51,13 @@ export function makeDecide(d: DecideDeps) {
       approvedAt: now.toISOString(),
       expiresAt: new Date(now.getTime() + p.expiresMins * 60_000).toISOString(),
     };
-    await d.upsertCondition(ctx.eventId, condition);
-    await d.setIncidentStatus(inc.id, p.status === 'ok' ? 'resolved' : 'verified');
-    await d.addAudit(inc.id, ctx.userId, 'approved_update', null, target);
-    await d.announce({ incident: inc, condition });
-    await d.signalRooms(inc);
+    // Persist first (so refetches see it), then tell every room at once.
+    await Promise.all([
+      d.upsertCondition(ctx.eventId, condition),
+      d.setIncidentStatus(inc.id, p.status === 'ok' ? 'resolved' : 'verified'),
+      d.addAudit(inc.id, ctx.userId, 'approved_update', null, target),
+    ]);
+    await Promise.all([d.announce({ incident: inc, condition }), d.signalRooms(inc)]);
     return { state, changed: true };
   };
 }

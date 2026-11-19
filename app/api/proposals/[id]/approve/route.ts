@@ -18,8 +18,7 @@ export async function POST(req: Request, ctx: RouteContext<'/api/proposals/[id]/
     const p = body.safeParse(await req.json().catch(() => ({})));
     if (!p.success) throw new HttpError(400, 'Invalid decision');
     const c = await requireMember(p.data.slug);
-    const gig = await dbm.getChannel('gig', c.ev.id);
-    const crew = await dbm.getChannel('crew', c.ev.id);
+    const [gig, crew] = await Promise.all([dbm.getChannel('gig', c.ev.id), dbm.getChannel('crew', c.ev.id)]);
 
     const decide = makeDecide({
       getProposal: dbm.getProposal,
@@ -36,9 +35,11 @@ export async function POST(req: Request, ctx: RouteContext<'/api/proposals/[id]/
         }, condition.notice);
       },
       signalRooms: async (inc) => {
-        await signal(inc.channelId, { kind: 'proposal', id });
-        await signal(gig, { kind: 'conditions' });
-        await signal(crew, { kind: 'conditions' });
+        await Promise.all([
+          signal(inc.channelId, { kind: 'proposal', id }),
+          signal(gig, { kind: 'conditions' }),
+          signal(crew, { kind: 'conditions' }),
+        ]);
       },
     });
 

@@ -72,20 +72,27 @@ Return JSON: {"placeId": string, "status": "ok"|"limited"|"closed", "notice": st
 Use "ok" only if the crew says the problem is fixed.`;
 }
 
+// gemini-2.5 models are retired for new keys; flash-lite answered reliably in testing.
+const MODELS = (process.env.GEMINI_MODELS ?? 'gemini-3.5-flash-lite,gemini-3.8-flash').split(',').map((m) => m.trim()).filter(Boolean);
+
 async function gemini(prompt: string): Promise<string> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY not set');
   const { GoogleGenAI } = await import('@google/genai');
   const ai = new GoogleGenAI({ apiKey: key });
-  const res = await Promise.race([
-    ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: { responseMimeType: 'application/json', temperature: 0.3 },
-    }),
-    new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
-  ]);
-  return res.text ?? '';
+  let lastErr: unknown;
+  for (const model of MODELS) {
+    try {
+      const res = await Promise.race([
+        ai.models.generateContent({ model, contents: prompt, config: { responseMimeType: 'application/json', temperature: 0.3 } }),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 12_000)),
+      ]);
+      return res.text ?? '';
+    } catch (e) {
+      lastErr = e; // overloaded / unavailable → try the next model
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('AI unavailable');
 }
 
 /** Draft an audience-facing update. Never writes state; a lead must approve it. */

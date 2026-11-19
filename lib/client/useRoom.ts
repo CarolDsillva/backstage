@@ -7,7 +7,7 @@ import {
 import { BS_TYPES, type StateSignal } from '@/lib/shared/types';
 import { isRenderable } from '@/lib/shared/trust';
 
-export type Me = { userId: string; name: string; appKey: string };
+export type Me = { userId: string; name: string; appKey: string; token?: string };
 
 function bumpActivity(slug?: string) {
   if (!slug) return;
@@ -48,7 +48,7 @@ export function useRoom(channelId: string | null, me: Me | null, slug?: string) 
         stateCbs.current.forEach((cb) => cb(m.content as StateSignal));
         return;
       }
-      setMessages((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, m]));
+      setMessages((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, m].sort((a, b) => a.sentAt - b.sentAt)));
     });
     connectNexconn(me)
       .then(() => loadHistory(channelId))
@@ -56,7 +56,8 @@ export function useRoom(channelId: string | null, me: Me | null, slug?: string) 
         if (!alive) return;
         setMessages((prev) => {
           const ids = new Set(hist.map((h) => h.id));
-          return [...hist.filter((h) => h.type !== BS_TYPES.state && isRenderable(h)), ...prev.filter((p) => !ids.has(p.id))];
+          return [...hist.filter((h) => h.type !== BS_TYPES.state && isRenderable(h)), ...prev.filter((p) => !ids.has(p.id))]
+            .sort((a, b) => a.sentAt - b.sentAt);
         });
       })
       .catch(() => {})

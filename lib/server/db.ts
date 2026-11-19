@@ -45,14 +45,24 @@ export function publicEvent(e: EventSecrets): EventRow {
   return rest;
 }
 
+// Small per-instance cache: the event row and channel ids are read on every request but rarely change.
+const EVENT_TTL_MS = 5_000;
+const eventCache = new Map<string, { at: number; ev: EventSecrets | null }>();
+const channelCache = new Map<string, string>();
+
 export async function getEventBySlug(slug: string): Promise<EventSecrets | null> {
+  const hit = eventCache.get(slug);
+  if (hit && Date.now() - hit.at < EVENT_TTL_MS) return hit.ev;
   const r = await db().from('events').select('*').eq('slug', slug).maybeSingle();
   const row = check(r) as EventDb | null;
-  return row ? mapEvent(row) : null;
+  const ev = row ? mapEvent(row) : null;
+  eventCache.set(slug, { at: Date.now(), ev });
+  return ev;
 }
 
 export async function setPhaseOverride(eventId: string, phase: Phase | null) {
   check(await db().from('events').update({ phase_override: phase }).eq('id', eventId));
+  eventCache.clear();
 }
 
 export async function listPlaces(eventId: string): Promise<Place[]> {
@@ -111,9 +121,13 @@ export async function listMemberIds(eventId: string, roles: Role[]): Promise<str
 }
 
 export async function getChannel(type: string, ctxId: string): Promise<string | null> {
+  const key = `${type}:${ctxId}`;
+  const cached = channelCache.get(key);
+  if (cached) return cached;
   const r = check(
     await db().from('channels').select('channel_id').eq('context_type', type).eq('context_id', ctxId).maybeSingle(),
   ) as { channel_id: string } | null;
+  if (r?.channel_id) channelCache.set(key, r.channel_id);
   return r?.channel_id ?? null;
 }
 
