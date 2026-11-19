@@ -8,7 +8,7 @@ export function IncidentCard({ content, state }: { content: Record<string, unkno
     <section className="mx-auto w-full max-w-sm rounded-3xl border border-gel/40 bg-gel/10 p-4">
       <p className="text-xs font-semibold text-gel">{cat}{place ? `: ${place.name}` : ''}</p>
       <p className="mt-1">{content.note as string}</p>
-      <p className="mt-1 text-xs text-haze">Reported by {content.reporterName as string}. Not confirmed yet.</p>
+      <p className="mt-1 text-xs text-haze">Reported by {content.reporterName as string}. The status is shown at the top of this room.</p>
     </section>
   );
 }
