@@ -1,0 +1,22 @@
+{
+  "event": {
+    "id": "evraahelive",
+    "slug": "raahe-live",
+    "title": "Raahe Live — Listening Session",
+    "artist": "Raahe",
+    "venue": "Raahe Studio Floor",
+    "durationHours": 3
+  },
+  "places": [
+    { "id": "stage",    "name": "Stage",       "kind": "stage",    "x": 50, "y": 14 },
+    { "id": "barrier",  "name": "Barrier",     "kind": "barrier",  "x": 50, "y": 30 },
+    { "id": "bar1",     "name": "Bar 1",       "kind": "bar",      "x": 14, "y": 52 },
+    { "id": "bar2",     "name": "Bar 2",       "kind": "bar",      "x": 86, "y": 52 },
+    { "id": "water",    "name": "Water point", "kind": "water",    "x": 14, "y": 74 },
+    { "id": "firstaid", "name": "First aid",   "kind": "firstaid", "x": 14, "y": 94 },
+    { "id": "sideexit", "name": "Side exit",   "kind": "exit",     "x": 92, "y": 80 },
+    { "id": "toilets",  "name": "Toilets",     "kind": "toilet",   "x": 82, "y": 110 },
+    { "id": "merch",    "name": "Merch",       "kind": "merch",    "x": 22, "y": 118 },
+    { "id": "entry",    "name": "Entry",       "kind": "entry",    "x": 50, "y": 132 }
+  ]
+}
