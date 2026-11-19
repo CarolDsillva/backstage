@@ -18,19 +18,23 @@ export function NewCardSheet({
   slug,
   onClose,
   onReport,
+  initialType,
+  onPosted,
 }: {
   state: EventState;
   slug: string;
   onClose: () => void;
   onReport: () => void;
+  initialType?: CardType | null;
+  onPosted?: () => void;
 }) {
-  const [type, setType] = useState<CardType | null>(null);
+  const [type, setType] = useState<CardType | null>(initialType ?? null);
   const available = OPTIONS.filter((o) => canCreate(o.type, state.me.role, state.phase));
 
   return (
     <Sheet title={type ? OPTIONS.find((o) => o.type === type)!.label : 'Add to the room'} onClose={onClose}>
       {type ? (
-        <CardForm type={type} slug={slug} onDone={onClose} onBack={() => setType(null)} />
+        <CardForm type={type} slug={slug} onDone={onPosted ?? onClose} onBack={() => setType(null)} />
       ) : (
         <ul className="flex flex-col gap-2">
           {available.map((o) => (

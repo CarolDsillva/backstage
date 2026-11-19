@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import { Bricolage_Grotesque, Permanent_Marker } from 'next/font/google';
+import { Plus_Jakarta_Sans, Permanent_Marker } from 'next/font/google';
 import './globals.css';
 
-const bricolage = Bricolage_Grotesque({ variable: '--font-bricolage', subsets: ['latin'] });
+const jakarta = Plus_Jakarta_Sans({ variable: '--font-jakarta', subsets: ['latin'] });
 const marker = Permanent_Marker({ variable: '--font-marker', subsets: ['latin'], weight: '400' });
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#17122a',
+  themeColor: '#110e1a',
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
@@ -20,7 +20,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="en" className={`${bricolage.variable} ${marker.variable} h-full antialiased`}>
+    <html lang="en" className={`${jakarta.variable} ${marker.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

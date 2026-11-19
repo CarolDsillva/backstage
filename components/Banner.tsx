@@ -25,11 +25,11 @@ export function Banner({
   return (
     <button
       onClick={onOpenMap}
-      className="mx-3 mt-2 flex items-start gap-3 rounded-2xl border border-spot/40 bg-spot/10 px-4 py-3 text-left"
+      className="mx-3 mt-2 flex items-start gap-3 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3 text-left"
     >
       <span aria-hidden className="mt-0.5 text-lg">📣</span>
       <span className="flex-1">
-        <span className="block font-semibold text-spot">Crew update: {place?.name ?? 'venue'}</span>
+        <span className="block font-semibold text-warn">Crew update: {place?.name ?? 'venue'}</span>
         <span className="block text-sm text-mist">{c.notice}</span>
         <span className="mt-1 block text-xs text-haze">
           Confirmed by {c.approvedBy}, {timeAgo(c.approvedAt, now)}

@@ -61,7 +61,7 @@ export function ProposalCard({ proposalId, slug, state, refreshKey }: { proposal
         {p.source === 'ai' ? 'Drafted from this conversation' : 'Drafted from the report'} · for {place?.name ?? 'the venue'}
       </p>
       <p className="mt-1 text-sm">
-        Mark as <strong className="text-spot">{STATUS_LABEL[p.status]}</strong> for {p.expiresMins} min, and tell the audience:
+        Mark as <strong className="text-warn">{STATUS_LABEL[p.status]}</strong> for {p.expiresMins} min, and tell the audience:
       </p>
       {pending && isCrew ? (
         <textarea

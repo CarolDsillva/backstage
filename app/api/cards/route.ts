@@ -6,7 +6,7 @@ import { canCreate, cardInput, CARD_TITLE } from '@/lib/shared/cards';
 import { phaseOf } from '@/lib/shared/phase';
 import { CARD_MESSAGE_TYPE } from '@/lib/shared/types';
 import { newId } from '@/lib/server/ids';
-import { post } from '@/lib/server/broadcast';
+import { post, signal } from '@/lib/server/broadcast';
 
 const body = z.object({ slug: z.string() }).and(cardInput);
 
@@ -26,6 +26,7 @@ export async function POST(req: Request) {
       // The card itself is a persisted Nexconn custom message; live tallies come from the DB.
       await post(gig, CARD_MESSAGE_TYPE[type], { cardId: id, type, payload, authorName: c.name },
         `${c.name}: ${CARD_TITLE[type]}`);
+      await signal(gig, { kind: 'card', id }); // every phone refetches so the card has data to render
     }
     return Response.json({ id });
   } catch (e) {

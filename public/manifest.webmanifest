@@ -3,7 +3,7 @@
   "short_name": "Backstage",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#17122a",
-  "theme_color": "#17122a",
+  "background_color": "#110e1a",
+  "theme_color": "#110e1a",
   "icons": []
 }

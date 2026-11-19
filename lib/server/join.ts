@@ -8,6 +8,8 @@ export const joinInput = z.object({
   slug: z.string().min(1).max(64),
   name: z.string().trim().min(1, 'Name is required').max(32, 'Name must be 32 characters or fewer'),
   code: z.string().max(64).optional(),
+  /** 'crew' = came through crew check-in: a wrong code is an error, not an audience join. */
+  as: z.enum(['audience', 'crew']).optional(),
 });
 
 export type JoinDeps = {
@@ -37,10 +39,13 @@ export function makeJoin(d: JoinDeps) {
   return async (raw: unknown, existingUserId: string | null): Promise<JoinResult> => {
     const parsed = joinInput.safeParse(raw);
     if (!parsed.success) throw new HttpError(400, parsed.error.issues[0].message);
-    const { slug, name, code } = parsed.data;
+    const { slug, name, code, as } = parsed.data;
 
     const ev = await d.getEvent(slug);
     if (!ev) throw new HttpError(404, 'Gig not found');
+    if (as === 'crew' && roleForCode(ev, code) === 'attendee') {
+      throw new HttpError(400, 'That code isn’t right. Ask your lead for tonight’s crew code.');
+    }
 
     // Independent steps run in parallel: each round trip is ~0.4 s on a far-away database.
     const [known, existingRole] = existingUserId

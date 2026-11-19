@@ -13,6 +13,7 @@ export type EventState = {
   channels: { gig: string | null; crew: string | null };
   fan: { optins: number; optedIn: boolean; myRating: number | null };
   roles: Record<string, Role>;
+  room: { people: number; faces: string[] };
   serverTime: string;
 };
 

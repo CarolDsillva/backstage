@@ -17,7 +17,7 @@ export function CardRenderer({ msg, state, slug, onChanged, refreshKey = 0 }: Pr
   if (msg.type === BS_TYPES.proposal) return <ProposalCard proposalId={c.proposalId as string} slug={slug} state={state} refreshKey={refreshKey} />;
 
   const card = state.cards.find((x) => x.id === c.cardId);
-  if (!card) return <p className="text-center text-xs text-haze">A card that’s no longer available</p>;
+  if (!card) return <p className="text-center text-xs text-haze">Loading…</p>;
   const props = { card, state, slug, onChanged };
   switch (card.type) {
     case 'song': return <SongCard {...props} />;
@@ -234,8 +234,8 @@ function QuestionCard({ card, state, slug, onChanged }: CardProps) {
 function AnnounceCard({ content, state }: { content: Record<string, unknown>; state: EventState }) {
   const place = state.places.find((p) => p.id === content.placeId);
   return (
-    <section className="mx-auto w-full max-w-sm rounded-3xl border border-spot/50 bg-spot/10 p-4">
-      <p className="text-xs font-semibold text-spot">Crew update{place ? `: ${place.name}` : ''}</p>
+    <section className="mx-auto w-full max-w-sm rounded-3xl border border-warn/50 bg-warn/10 p-4">
+      <p className="text-xs font-semibold text-warn">Crew update{place ? `: ${place.name}` : ''}</p>
       <p className="mt-1 font-semibold">{content.notice as string}</p>
       <p className="mt-1 text-xs text-haze">Confirmed by {content.approvedBy as string}</p>
     </section>

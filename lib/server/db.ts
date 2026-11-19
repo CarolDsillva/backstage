@@ -345,3 +345,14 @@ export async function staffRoles(eventId: string): Promise<Record<string, Role>>
   const rows = check(await db().from('memberships').select('user_id,role').eq('event_id', eventId).neq('role', 'attendee')) as { user_id: string; role: Role }[];
   return Object.fromEntries(rows.map((r) => [r.user_id, r.role]));
 }
+
+/** Public, no-login preview for the welcome screen: counts and initials only, no names. */
+export async function roomPreview(eventId: string) {
+  const [count, recent] = await Promise.all([
+    db().from('memberships').select('user_id', { count: 'exact', head: true }).eq('event_id', eventId),
+    db().from('memberships').select('joined_at,users(name)').eq('event_id', eventId).order('joined_at', { ascending: false }).limit(4),
+  ]);
+  const faces = ((recent.data ?? []) as unknown as { users: { name: string } | null }[])
+    .map((r) => (r.users?.name ?? '?').trim().split(/\s+/).map((w) => w[0] ?? '').join('').slice(0, 2).toUpperCase());
+  return { people: count.count ?? 0, faces };
+}

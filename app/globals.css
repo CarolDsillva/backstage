@@ -1,19 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-night: #17122a;
-  --color-velvet: #221b3a;
-  --color-velvet-2: #2d2449;
-  --color-line: #3a3058;
-  --color-haze: #a79fc2;
-  --color-mist: #ece8f7;
-  --color-spot: #ffc861;
-  --color-gel: #ff6f91;
-  --color-ok: #5fd3a6;
+  /* Night-club purple-black, one lime accent (ref: lime-on-purple event UI). */
+  --color-night: #110e1a;
+  --color-velvet: #1c1829;
+  --color-velvet-2: #272138;
+  --color-line: #342d4a;
+  --color-haze: #a49db9;
+  --color-mist: #f4f2fa;
+  --color-spot: #c6f36b;      /* lime: primary action */
+  --color-gel: #ff5fa2;       /* hot pink: live, alerts */
+  --color-warn: #ffc35a;      /* amber: limited / crew updates */
+  --color-ok: #5fe3b0;
   --color-paper: #f6eedb;
-  --color-ink: #2a2233;
-  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --color-ink: #16121f;
+  --color-plum: #3b2463;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-hand: var(--font-marker), ui-rounded, cursive;
+  --radius-card: 1.75rem;
 }
 
 html,
@@ -36,10 +40,44 @@ body {
 /* The room is lit from the stage. */
 .stage-light {
   background:
-    radial-gradient(120% 60% at 50% -10%, rgb(255 111 145 / 0.22), transparent 60%),
-    radial-gradient(80% 40% at 85% -5%, rgb(255 200 97 / 0.14), transparent 60%),
+    radial-gradient(110% 50% at 15% -10%, rgb(124 58 237 / 0.28), transparent 60%),
+    radial-gradient(80% 40% at 100% 0%, rgb(255 95 162 / 0.12), transparent 60%),
     var(--color-night);
 }
+
+/* Generated gig poster: stage gels + haze + grain, standing in for a photo. */
+.poster {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 55% at 70% 18%, rgb(255 95 162 / 0.95), transparent 62%),
+    radial-gradient(55% 50% at 18% 30%, rgb(124 58 237 / 0.95), transparent 65%),
+    radial-gradient(70% 45% at 50% 100%, rgb(198 243 107 / 0.35), transparent 70%),
+    linear-gradient(180deg, #2a1650 0%, #120c22 100%);
+}
+.poster::before {
+  /* light beams */
+  content: "";
+  position: absolute;
+  inset: -20% -10% 30% -10%;
+  background:
+    conic-gradient(from 200deg at 30% 0%, transparent 0deg, rgb(255 255 255 / 0.14) 8deg, transparent 18deg),
+    conic-gradient(from 150deg at 72% 0%, transparent 0deg, rgb(255 255 255 / 0.12) 7deg, transparent 16deg);
+  filter: blur(6px);
+}
+.poster::after {
+  /* film grain */
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.poster > * { position: relative; z-index: 1; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .5s cubic-bezier(.2,.8,.2,1) both; }
 
 /* Paper setlist taped to the stage: the one loud element. */
 .setlist {

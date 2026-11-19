@@ -7,7 +7,7 @@ import type { Place } from '@/lib/shared/types';
 
 const PIN: Record<Effective['status'], string> = {
   ok: 'fill-ok',
-  limited: 'fill-spot',
+  limited: 'fill-warn',
   closed: 'fill-gel',
   stale: 'fill-haze',
 };
@@ -77,7 +77,7 @@ export function VenueMap({ state, onReport }: { state: EventState; onReport?: (p
 function StatusChip({ e }: { e: Effective }) {
   const cls = {
     ok: 'text-ok',
-    limited: 'text-spot',
+    limited: 'text-warn',
     closed: 'text-gel',
     stale: 'text-haze',
   }[e.status];

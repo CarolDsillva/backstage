@@ -78,4 +78,15 @@ describe('join', () => {
     await makeJoin(d)({ slug: 'gig', name: 'Ann' }, null);
     expect(d.joinGroup).not.toHaveBeenCalledWith('incidentA', expect.anything());
   });
+
+  it('crew check-in rejects a wrong code instead of joining as audience', async () => {
+    const { d } = deps();
+    await expect(makeJoin(d)({ slug: 'gig', name: 'Cat', code: 'nope', as: 'crew' }, null)).rejects.toMatchObject({ status: 400 });
+    expect(d.upsertUser).not.toHaveBeenCalled();
+  });
+
+  it('crew check-in with a valid code joins as crew', async () => {
+    const { d } = deps();
+    expect((await makeJoin(d)({ slug: 'gig', name: 'Cat', code: 'crew1', as: 'crew' }, null)).role).toBe('crew');
+  });
 });

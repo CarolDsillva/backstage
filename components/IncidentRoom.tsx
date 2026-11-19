@@ -121,6 +121,7 @@ export function IncidentRoom({
           <div className="min-w-0">
             <h2 className="font-semibold">{CATEGORY_LABEL[inc.category]}{place ? `: ${place.name}` : ''}</h2>
             <p className="text-xs text-haze">From {inc.reporterName}, {timeAgo(inc.createdAt)}</p>
+            <p className="mt-1 line-clamp-2 text-sm text-mist">“{inc.note}”</p>
           </div>
           <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLE[inc.status]}`}>
             {attendeeLabel(inc.status)}
