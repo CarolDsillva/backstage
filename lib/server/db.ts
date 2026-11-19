@@ -76,3 +76,50 @@ export async function upsertCondition(eventId: string, c: Condition) {
     }),
   );
 }
+
+// ---- users, memberships, channels ----
+import type { Role } from '@/lib/shared/types';
+
+export async function getUser(id: string) {
+  return check(await db().from('users').select('id,name').eq('id', id).maybeSingle()) as
+    | { id: string; name: string }
+    | null;
+}
+
+export async function upsertUser(id: string, name: string) {
+  check(await db().from('users').upsert({ id, name }));
+}
+
+export async function getRole(eventId: string, userId: string): Promise<Role | null> {
+  const r = check(
+    await db().from('memberships').select('role').eq('event_id', eventId).eq('user_id', userId).maybeSingle(),
+  ) as { role: Role } | null;
+  return r?.role ?? null;
+}
+
+export async function setRole(eventId: string, userId: string, role: Role) {
+  check(await db().from('memberships').upsert({ event_id: eventId, user_id: userId, role }));
+}
+
+export async function listMemberIds(eventId: string, roles: Role[]): Promise<string[]> {
+  const rows = check(
+    await db().from('memberships').select('user_id').eq('event_id', eventId).in('role', roles),
+  ) as { user_id: string }[];
+  return rows.map((r) => r.user_id);
+}
+
+export async function getChannel(type: string, ctxId: string): Promise<string | null> {
+  const r = check(
+    await db().from('channels').select('channel_id').eq('context_type', type).eq('context_id', ctxId).maybeSingle(),
+  ) as { channel_id: string } | null;
+  return r?.channel_id ?? null;
+}
+
+export async function saveChannel(type: string, ctxId: string, channelId: string) {
+  check(
+    await db().from('channels').upsert(
+      { context_type: type, context_id: ctxId, channel_id: channelId },
+      { onConflict: 'context_type,context_id', ignoreDuplicates: true },
+    ),
+  );
+}
