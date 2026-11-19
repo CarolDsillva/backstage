@@ -141,7 +141,7 @@ export function GigApp({ slug }: { slug: string }) {
         )}
         {tab === 'map' && <VenueMap state={state} onReport={(placeId) => setReportPlace(placeId)} />}
         {tab === 'help' && <CrewTab state={state} slug={slug} me={me} onReport={(c) => { setReportCategory(c); setReportPlace(null); }} />}
-        {tab === 'fan' && <FanTab state={state} slug={slug} messages={room.messages} onChanged={refetch} />}
+        {tab === 'fan' && <FanTab state={state} slug={slug} messages={room.messages} onChanged={refetch} onSendPhoto={room.sendImage} />}
       </main>
 
       <nav className="relative grid grid-cols-5 items-end border-t border-line bg-night/95 pb-[env(safe-area-inset-bottom)] backdrop-blur" aria-label="Sections">
