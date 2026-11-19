@@ -16,6 +16,7 @@ const join = makeJoin({
   joinGroup,
   issueToken,
   newId: () => 'u' + crypto.randomUUID().replace(/-/g, '').slice(0, 20),
+  openIncidentChannels: dbm.openIncidentChannels,
 });
 
 export async function POST(req: Request) {

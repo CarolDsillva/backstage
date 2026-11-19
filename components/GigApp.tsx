@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { useEventState } from '@/lib/client/useEventState';
+import { badgeFor, useEventState } from '@/lib/client/useEventState';
 import { useRoom } from '@/lib/client/useRoom';
+import { reconnectNow } from '@/lib/client/nexconn';
 import { JoinScreen } from './JoinScreen';
 import { PhaseTrack } from './PhaseTrack';
 import { Banner } from './Banner';
@@ -72,6 +73,7 @@ export function GigApp({ slug }: { slug: string }) {
           <>
             <MessageList
               messages={room.messages}
+              roleOf={(id) => badgeFor(state, id)}
               loading={room.loading}
               renderCustom={(m) => <CardRenderer msg={m} state={state} slug={slug} onChanged={refetch} />}
               empty={<RoomEmpty phase={phase} />}
@@ -120,9 +122,20 @@ export function GigApp({ slug }: { slug: string }) {
   );
 }
 
-function ConnDot({ status }: { status: string }) {
-  const label = status === 'online' ? 'Live' : status === 'offline' ? 'Offline' : status === 'reconnecting' ? 'Reconnecting…' : 'Connecting…';
-  const color = status === 'online' ? 'bg-ok' : status === 'offline' ? 'bg-gel' : 'bg-spot animate-pulse';
+export function ConnDot({ status }: { status: string }) {
+  if (status === 'kicked' || status === 'offline') {
+    return (
+      <button
+        onClick={() => void reconnectNow()}
+        className="mt-1 flex shrink-0 items-center gap-1.5 rounded-full border border-gel/50 px-2.5 py-1 text-xs text-gel"
+      >
+        <span className="h-2 w-2 rounded-full bg-gel" aria-hidden />
+        {status === 'kicked' ? 'Open in another tab. Use it here' : 'Offline. Tap to retry'}
+      </button>
+    );
+  }
+  const label = status === 'online' ? 'Live' : status === 'reconnecting' ? 'Reconnecting…' : 'Connecting…';
+  const color = status === 'online' ? 'bg-ok' : 'animate-pulse bg-spot';
   return (
     <span className="mt-1 flex shrink-0 items-center gap-1.5 text-xs text-haze" role="status">
       <span className={`h-2 w-2 rounded-full ${color}`} aria-hidden />

@@ -5,6 +5,7 @@ import {
   type ChatMsg, type ConnStatus,
 } from './nexconn';
 import { BS_TYPES, type StateSignal } from '@/lib/shared/types';
+import { isRenderable } from '@/lib/shared/trust';
 
 export type Me = { userId: string; name: string; appKey: string };
 
@@ -42,7 +43,7 @@ export function useRoom(channelId: string | null, me: Me | null, slug?: string) 
     let alive = true;
     setLoading(true);
     const off = onMessage((m) => {
-      if (m.channelId !== channelId) return;
+      if (m.channelId !== channelId || !isRenderable(m)) return;
       if (m.type === BS_TYPES.state) {
         stateCbs.current.forEach((cb) => cb(m.content as StateSignal));
         return;
@@ -55,7 +56,7 @@ export function useRoom(channelId: string | null, me: Me | null, slug?: string) 
         if (!alive) return;
         setMessages((prev) => {
           const ids = new Set(hist.map((h) => h.id));
-          return [...hist.filter((h) => h.type !== BS_TYPES.state), ...prev.filter((p) => !ids.has(p.id))];
+          return [...hist.filter((h) => h.type !== BS_TYPES.state && isRenderable(h)), ...prev.filter((p) => !ids.has(p.id))];
         });
       })
       .catch(() => {})

@@ -20,7 +20,7 @@ Built for the Nexconn Build Challenge 2026 with the **Nexconn Chat SDK**.
 - **Server API**: access-token issuance, group creation and join, and server-sent messages (signed with SHA1(AppSecret+Nonce+Timestamp), with Singapore primary/backup failover).
 - **9 custom message types**: `BS:Poll`, `BS:SongReq`, `BS:Meetup`, `BS:Carpool`, `BS:Question`, `BS:Incident`, `BS:Proposal`, `BS:Announce`, and the non-persisted `BS:State` signal. Every live update (votes, approvals, phase changes) travels over Nexconn.
 - **Text and image messages** with message history.
-- Connection status with automatic token refresh.
+- Connection status with automatic reconnect, fresh-token retry with backoff, and a one-tap "use it here" when another tab takes over.
 
 ## Run it
 

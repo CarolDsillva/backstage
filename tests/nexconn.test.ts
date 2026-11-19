@@ -70,3 +70,22 @@ describe('nexconn server client', () => {
     expect(await issueToken('u1', 'Ann', f)).toBe('tok');
   });
 });
+
+describe('nexconn idempotency (review I1/M2)', () => {
+  beforeEach(() => { resetEnvCache(); getEnv(envSrc); });
+
+  it('joinGroup treats "already a member" (25412) as success', async () => {
+    const f = vi.fn().mockImplementation(async () => ok({ code: 25412, msg: 'The user is already a member' }));
+    await expect(joinGroup('g1', ['u1'], f)).resolves.toBeUndefined();
+  });
+
+  it('createGroup treats code 25409 (already exists) as success whatever the message', async () => {
+    const f = vi.fn().mockImplementation(async () => ok({ code: 25409, msg: 'conflict' }));
+    await expect(createGroup('g1', 'Gig', 'owner', [], f)).resolves.toBeUndefined();
+  });
+
+  it('createGroup still throws on other errors', async () => {
+    const f = vi.fn().mockImplementation(async () => ok({ code: 1002, msg: 'bad sig' }));
+    await expect(createGroup('g1', 'Gig', 'owner', [], f)).rejects.toBeInstanceOf(NexconnError);
+  });
+});

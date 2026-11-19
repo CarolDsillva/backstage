@@ -320,3 +320,14 @@ export async function eventStats(eventId: string) {
     quotes: fb.filter((f) => f.quote).slice(0, 12).map((f) => ({ quote: f.quote as string, name: f.users?.name ?? 'Someone', rating: f.rating })),
   };
 }
+
+export async function openIncidentChannels(eventId: string): Promise<string[]> {
+  const rows = check(await db().from('incidents').select('channel_id').eq('event_id', eventId).neq('status', 'resolved')) as { channel_id: string }[];
+  return rows.map((r) => r.channel_id);
+}
+
+/** userId -> role for everyone who isn't a plain attendee (for chat badges). */
+export async function staffRoles(eventId: string): Promise<Record<string, Role>> {
+  const rows = check(await db().from('memberships').select('user_id,role').eq('event_id', eventId).neq('role', 'attendee')) as { user_id: string; role: Role }[];
+  return Object.fromEntries(rows.map((r) => [r.user_id, r.role]));
+}

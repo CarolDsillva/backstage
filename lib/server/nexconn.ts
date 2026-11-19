@@ -9,6 +9,10 @@ export class NexconnError extends Error {
   }
 }
 
+/** Documented codes we treat as success because the desired state already holds. */
+export const GROUP_EXISTS = 25409;
+export const ALREADY_MEMBER = 25412;
+
 export function sign(secret: string, nonce: string, ts: string): string {
   return crypto.createHash('sha1').update(secret + nonce + ts).digest('hex');
 }
@@ -85,7 +89,7 @@ export async function createGroup(
       f,
     );
   } catch (e) {
-    if (e instanceof NexconnError && /exist/i.test(e.message)) return;
+    if (e instanceof NexconnError && (e.code === GROUP_EXISTS || /already exist/i.test(e.message))) return;
     throw e;
   }
   if (userIds.length > 30) await joinGroup(channelId, userIds.slice(30), f);
@@ -93,7 +97,11 @@ export async function createGroup(
 
 export async function joinGroup(channelId: string, userIds: string[], f?: FetchImpl): Promise<void> {
   for (let i = 0; i < userIds.length; i += 100) {
-    await nexconnPost('/v4/group-channel/join', { channelId, userIds: userIds.slice(i, i + 100) }, f);
+    try {
+      await nexconnPost('/v4/group-channel/join', { channelId, userIds: userIds.slice(i, i + 100) }, f);
+    } catch (e) {
+      if (!(e instanceof NexconnError && e.code === ALREADY_MEMBER)) throw e;
+    }
   }
 }
 

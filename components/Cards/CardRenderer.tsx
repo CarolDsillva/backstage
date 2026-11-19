@@ -172,16 +172,20 @@ function QuestionCard({ card, state, slug, onChanged }: CardProps) {
   const { vote, busy, error } = useVote(card, slug, onChanged);
   const [answer, setAnswer] = useState('');
   const [sending, setSending] = useState(false);
+  const [answerError, setAnswerError] = useState('');
   const canAnswer = state.me.role === 'artist' || state.me.role === 'lead';
   const mine = hasVoted(card, state.me.userId);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
     setSending(true);
+    setAnswerError('');
     try {
       await postJson(`/api/cards/${card.id}/answer`, { slug, text: answer });
       setAnswer('');
       onChanged();
+    } catch (e) {
+      setAnswerError((e as Error).message);
     } finally {
       setSending(false);
     }
@@ -222,7 +226,7 @@ function QuestionCard({ card, state, slug, onChanged }: CardProps) {
           <button disabled={sending || !answer.trim()} className="h-10 rounded-xl bg-spot px-3 font-semibold text-ink disabled:opacity-40">Answer</button>
         </form>
       ) : null}
-      {error && <p role="alert" className="mt-1 text-xs text-gel">{error}</p>}
+      {(error || answerError) && <p role="alert" className="mt-1 text-xs text-gel">{error || answerError}</p>}
     </section>
   );
 }

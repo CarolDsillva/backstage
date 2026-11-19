@@ -40,3 +40,13 @@ describe('incidentInput', () => {
     expect(incidentInput.safeParse({ slug: 'g', category: 'help', note: '  ' }).success).toBe(false);
   });
 });
+
+import { canDraft } from '@/lib/shared/incidents';
+
+describe('canDraft (review M4)', () => {
+  it('only reports tied to a place can become a venue update', () => {
+    expect(canDraft({ placeId: 'bar2', status: 'checking' })).toBe(true);
+    expect(canDraft({ placeId: null, status: 'checking' })).toBe(false);
+    expect(canDraft({ placeId: 'bar2', status: 'resolved' })).toBe(false);
+  });
+});

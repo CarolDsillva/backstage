@@ -9,6 +9,7 @@ import { BS_TYPES } from '@/lib/shared/types';
 /** After the encore: the room becomes the artist's fan club. */
 export function FanTab({ state, slug, messages, onChanged }: { state: EventState; slug: string; messages: ChatMsg[]; onChanged: () => void }) {
   const [busy, setBusy] = useState(false);
+  const [optinError, setOptinError] = useState('');
   const [asking, setAsking] = useState(false);
   const photos = messages.filter((m) => m.type === 'RC:ImgMsg');
   const questions = state.cards
@@ -17,9 +18,12 @@ export function FanTab({ state, slug, messages, onChanged }: { state: EventState
 
   async function optin() {
     setBusy(true);
+    setOptinError('');
     try {
       await postJson('/api/fan', { slug, action: 'optin' });
       onChanged();
+    } catch (e) {
+      setOptinError((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -39,6 +43,7 @@ export function FanTab({ state, slug, messages, onChanged }: { state: EventState
             {busy ? 'Adding you…' : 'Put me on the list'}
           </button>
         )}
+        {optinError && <p role="alert" className="mt-2 text-sm text-gel">{optinError}</p>}
       </section>
 
       <Feedback state={state} slug={slug} onChanged={onChanged} />

@@ -3,6 +3,7 @@ import { requireMember } from '@/lib/server/auth';
 import { addAudit, getIncident, insertProposal, listPlaces } from '@/lib/server/db';
 import { errorResponse, HttpError } from '@/lib/server/http';
 import { rolesFor } from '@/lib/shared/permissions';
+import { canDraft } from '@/lib/shared/incidents';
 import { draftProposal } from '@/lib/server/ai';
 import { newId } from '@/lib/server/ids';
 import { post } from '@/lib/server/broadcast';
@@ -22,6 +23,7 @@ export async function POST(req: Request, ctx: RouteContext<'/api/incidents/[id]/
     const c = await requireMember(p.data.slug, rolesFor('proposeUpdate'));
     const incident = await getIncident(id);
     if (!incident || incident.eventId !== c.ev.id) throw new HttpError(404, 'Report not found');
+    if (!canDraft(incident)) throw new HttpError(400, 'Only open reports tied to a place can become an audience update.');
     const places = await listPlaces(c.ev.id);
     const place = places.find((x) => x.id === incident.placeId) ?? null;
 

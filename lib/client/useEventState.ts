@@ -12,6 +12,7 @@ export type EventState = {
   me: { userId: string; name: string; role: Role };
   channels: { gig: string | null; crew: string | null };
   fan: { optins: number; optedIn: boolean; myRating: number | null };
+  roles: Record<string, Role>;
   serverTime: string;
 };
 
@@ -50,4 +51,11 @@ export async function postJson<T = unknown>(url: string, body: unknown, method =
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error((data as { error?: string }).error ?? 'That didn’t go through. Try again.');
   return data as T;
+}
+
+const BADGE: Record<Role, string | undefined> = { attendee: undefined, artist: 'Artist', crew: 'Crew', lead: 'Lead' };
+
+export function badgeFor(state: EventState, userId: string): string | undefined {
+  const r = state.roles[userId];
+  return r ? BADGE[r] : undefined;
 }

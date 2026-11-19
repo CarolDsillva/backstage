@@ -37,3 +37,8 @@ export const incidentInput = z.object({
   placeId: z.string().max(40).nullish(),
   note: z.string().trim().min(1, 'Tell the crew what’s going on.').max(500, 'Keep it under 500 characters.'),
 });
+
+/** A venue update needs a place to attach to; lost items and lost groups stay private. */
+export function canDraft(i: { placeId: string | null; status: IncidentStatus }) {
+  return !!i.placeId && i.status !== 'resolved';
+}

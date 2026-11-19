@@ -1,11 +1,11 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { useRoom, type Me } from '@/lib/client/useRoom';
-import { postJson, type EventState } from '@/lib/client/useEventState';
+import { badgeFor, postJson, type EventState } from '@/lib/client/useEventState';
 import { MessageList } from './Chat/MessageList';
 import { Composer } from './Chat/Composer';
 import { CardRenderer } from './Cards/CardRenderer';
-import { attendeeLabel, CATEGORY_LABEL } from '@/lib/shared/incidents';
+import { attendeeLabel, canDraft, CATEGORY_LABEL } from '@/lib/shared/incidents';
 import { timeAgo } from '@/lib/shared/time';
 import type { Incident, IncidentStatus } from '@/lib/shared/types';
 
@@ -133,7 +133,7 @@ export function IncidentRoom({
                 {busy === 'checking' ? 'Saving…' : 'I’m on it'}
               </button>
             )}
-            {inc.status !== 'resolved' && (
+            {canDraft(inc) && (
               <button disabled={!!busy} onClick={draft} className="h-10 shrink-0 rounded-xl border border-spot px-3 text-sm font-semibold text-spot">
                 {busy === 'draft' ? 'Drafting…' : 'Draft audience update'}
               </button>
@@ -164,6 +164,7 @@ export function IncidentRoom({
       </div>
       <MessageList
         messages={room.messages}
+        roleOf={(id) => badgeFor(state, id)}
         loading={room.loading}
         renderCustom={(m) => <CardRenderer msg={m} state={state} slug={slug} onChanged={() => setRefreshKey((k) => k + 1)} refreshKey={refreshKey} />}
         empty={<p className="text-sm text-haze">This room is just you and the crew.</p>}

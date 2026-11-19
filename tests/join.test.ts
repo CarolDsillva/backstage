@@ -18,6 +18,7 @@ function deps(overrides: Partial<JoinDeps> = {}) {
     joinGroup: vi.fn(async () => {}),
     issueToken: async (u) => `tok-${u}`,
     newId: (() => { let n = 0; return () => `u${++n}`; })(),
+    openIncidentChannels: async () => ['incidentA', 'incidentB'],
     ...overrides,
   };
   return { d, users, members };
@@ -63,5 +64,18 @@ describe('join', () => {
     expect(again.userId).toBe(first.userId);
     expect(again.role).toBe('lead');
     expect(members.size).toBe(1);
+  });
+
+  it('crew who join late are added to every open report room (review I4)', async () => {
+    const { d } = deps();
+    await makeJoin(d)({ slug: 'gig', name: 'Cat', code: 'crew1' }, null);
+    expect(d.joinGroup).toHaveBeenCalledWith('incidentA', ['u1']);
+    expect(d.joinGroup).toHaveBeenCalledWith('incidentB', ['u1']);
+  });
+
+  it('attendees are never added to report rooms', async () => {
+    const { d } = deps();
+    await makeJoin(d)({ slug: 'gig', name: 'Ann' }, null);
+    expect(d.joinGroup).not.toHaveBeenCalledWith('incidentA', expect.anything());
   });
 });

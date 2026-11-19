@@ -20,6 +20,8 @@ export type JoinDeps = {
   joinGroup(channelId: string, userIds: string[]): Promise<void>;
   issueToken(userId: string, name: string): Promise<string>;
   newId(): string;
+  /** Nexconn channels of reports that are not resolved yet. */
+  openIncidentChannels(eventId: string): Promise<string[]>;
 };
 
 export type JoinResult = {
@@ -55,6 +57,8 @@ export function makeJoin(d: JoinDeps) {
     if (isStaff(role)) {
       crewChannelId = await d.ensureChannel('crew', ev.id, `${ev.title} · Crew`, userId);
       await d.joinGroup(crewChannelId, [userId]);
+      // Crew who arrive mid-show must be able to open reports filed before they joined.
+      for (const ch of await d.openIncidentChannels(ev.id)) await d.joinGroup(ch, [userId]);
     }
 
     const token = await d.issueToken(userId, name);

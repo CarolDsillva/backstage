@@ -3,12 +3,13 @@
  * Thin client wrapper over the Nexconn Web Chat SDK.
  * The SDK is imported dynamically so it never runs during SSR.
  */
-import { BS_TYPES } from '@/lib/shared/types';
+import { BS_TYPES, SYSTEM_USER_ID } from '@/lib/shared/types';
+import { backoffMs, connAction } from '@/lib/shared/conn';
 
 type Sdk = typeof import('@nexconn/chat');
 type SdkMessage = import('@nexconn/chat').Message;
 
-export type ConnStatus = 'connecting' | 'online' | 'reconnecting' | 'offline';
+export type ConnStatus = 'connecting' | 'online' | 'reconnecting' | 'offline' | 'kicked';
 
 export type ChatMsg = {
   id: string;
@@ -62,7 +63,7 @@ export function toChatMsg(m: SdkMessage): ChatMsg {
     id: m.messageId || `${m.senderUserId}-${m.sentTime}`,
     channelId: m.channelIdentifier.channelId,
     senderId: m.senderUserId,
-    senderName: info?.name ?? (m.senderUserId === 'backstagebot' ? 'Backstage' : 'Someone'),
+    senderName: m.senderUserId === SYSTEM_USER_ID ? 'Backstage' : info?.name ?? 'Someone',
     type: m.messageType,
     content,
     sentAt: m.sentTime,
@@ -77,13 +78,15 @@ async function fetchToken(): Promise<string> {
 }
 
 /** Initialise once and connect. Safe to call many times. */
-export function connectNexconn(opts: { appKey: string; userId: string; name: string; token?: string }) {
-  myUserId = opts.userId;
-  myName = opts.name;
-  connectPromise ??= (async () => {
+let setupPromise: Promise<Sdk> | null = null;
+let reconnecting = false;
+
+/** Initialise the engine, custom types and handlers exactly once. */
+function setup(appKey: string) {
+  setupPromise ??= (async () => {
     const sdk = await loadSdk();
-    const { NCEngine, MessageHandler, ConnectionStatusHandler, ConnectionStatus } = sdk;
-    NCEngine.initialize({ appKey: opts.appKey });
+    const { NCEngine, MessageHandler, ConnectionStatusHandler } = sdk;
+    NCEngine.initialize({ appKey });
     NCEngine.registerCustomMessages([
       ...[BS_TYPES.poll, BS_TYPES.song, BS_TYPES.meetup, BS_TYPES.carpool, BS_TYPES.question,
         BS_TYPES.incident, BS_TYPES.proposal, BS_TYPES.announce].map((messageType) => ({
@@ -100,28 +103,81 @@ export function connectNexconn(opts: { appKey: string; userId: string; name: str
       },
     }));
     NCEngine.addConnectionStatusHandler('backstage', new ConnectionStatusHandler({
-      onConnectionStatusChanged({ status: s }) {
-        if (s === ConnectionStatus.CONNECTED) setStatus('online');
-        else if (s === ConnectionStatus.CONNECTING) setStatus(status === 'online' ? 'reconnecting' : 'connecting');
-        else setStatus('reconnecting');
+      onConnectionStatusChanged({ status: s, code }) {
+        const action = connAction(Number(s), code);
+        if (action === 'online') setStatus('online');
+        else if (action === 'wait') setStatus(status === 'online' ? 'reconnecting' : status === 'kicked' ? 'kicked' : 'connecting');
+        else if (action === 'kicked') setStatus('kicked');
+        else void reconnectLoop();
       },
     }));
+    return sdk;
+  })();
+  return setupPromise;
+}
 
-    let token = opts.token ?? (await fetchToken());
-    for (let attempt = 0; attempt < 3; attempt++) {
+/** Connect with a fresh token, retrying with backoff. Never gives up silently. */
+async function connectWithRetry(firstToken?: string): Promise<string> {
+  const { NCEngine } = await loadSdk();
+  let token = firstToken;
+  for (let attempt = 0; attempt < 6; attempt++) {
+    try {
+      token ??= await fetchToken();
       const res = await NCEngine.connect({ token });
       if (res.isOk && res.data) {
         setStatus('online');
         return res.data.userId;
       }
-      // Token rejected/expired → fetch a fresh one and retry.
-      token = await fetchToken();
+    } catch {
+      // network or token fetch failed; fall through to backoff
     }
-    setStatus('offline');
-    connectPromise = null;
-    throw new Error('Could not connect to chat');
+    token = undefined; // rejected/expired → fetch a fresh one next time
+    setStatus(attempt === 0 && status === 'connecting' ? 'connecting' : 'reconnecting');
+    await new Promise((r) => setTimeout(r, backoffMs(attempt)));
+  }
+  setStatus('offline');
+  throw new Error('Could not connect to chat');
+}
+
+async function reconnectLoop() {
+  if (reconnecting) return;
+  reconnecting = true;
+  setStatus('reconnecting');
+  try {
+    await connectWithRetry();
+  } catch {
+    // status is 'offline'; the UI offers "Try again"
+  } finally {
+    reconnecting = false;
+  }
+}
+
+/** Initialise once and connect. Safe to call many times. */
+export function connectNexconn(opts: { appKey: string; userId: string; name: string; token?: string }) {
+  myUserId = opts.userId;
+  myName = opts.name;
+  connectPromise ??= (async () => {
+    await setup(opts.appKey);
+    try {
+      return await connectWithRetry(opts.token);
+    } catch (e) {
+      connectPromise = null;
+      throw e;
+    }
   })();
   return connectPromise;
+}
+
+/** "Try again" / "Use it here" button: force a fresh connection now. */
+export async function reconnectNow() {
+  if (!setupPromise) return;
+  const { NCEngine } = await loadSdk();
+  try {
+    await NCEngine.disconnect();
+  } catch {
+    // already disconnected
+  }
+  await reconnectLoop();
 }
 
 function withSender<T extends Record<string, unknown>>(content: T) {
