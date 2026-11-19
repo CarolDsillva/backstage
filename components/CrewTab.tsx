@@ -6,28 +6,75 @@ import { useRoom, type Me } from '@/lib/client/useRoom';
 import { IncidentRoom } from './IncidentRoom';
 import { attendeeLabel, CATEGORY_LABEL } from '@/lib/shared/incidents';
 import { timeAgo } from '@/lib/shared/time';
-import type { Incident, IncidentStatus } from '@/lib/shared/types';
+import type { Incident, IncidentCategory, IncidentStatus } from '@/lib/shared/types';
+import { Search, Users, TriangleAlert, LifeBuoy, ChevronRight, Phone, type LucideIcon } from 'lucide-react';
 
-export function CrewTab({ state, slug, me, onReport }: { state: EventState; slug: string; me: Me | null; onReport: () => void }) {
+export function CrewTab({ state, slug, me, onReport }: { state: EventState; slug: string; me: Me | null; onReport: (category?: IncidentCategory) => void }) {
   const staff = state.me.role === 'crew' || state.me.role === 'lead';
   return staff ? <StaffView state={state} slug={slug} me={me} /> : <AttendeeView state={state} slug={slug} me={me} onReport={onReport} />;
 }
 
-function AttendeeView({ state, slug, me, onReport }: { state: EventState; slug: string; me: Me | null; onReport: () => void }) {
+const HELP_OPTIONS: { id: IncidentCategory; label: string; hint: string; icon: LucideIcon; tone: string }[] = [
+  { id: 'lost_item', label: 'Lost something', hint: 'Phone, wallet, keys…', icon: Search, tone: 'bg-violet-500/20 text-violet-300' },
+  { id: 'lost_group', label: 'Lost my group', hint: 'We’ll help you find them', icon: Users, tone: 'bg-sky-500/15 text-sky-300' },
+  { id: 'place_problem', label: 'Something’s wrong', hint: 'At a bar, toilet, exit…', icon: TriangleAlert, tone: 'bg-warn/15 text-warn' },
+  { id: 'help', label: 'I need help', hint: 'Talk to the crew', icon: LifeBuoy, tone: 'bg-gel/15 text-gel' },
+];
+
+const STATUS_TONE: Record<IncidentStatus, string> = {
+  new: 'bg-gel/15 text-gel',
+  checking: 'bg-warn/15 text-warn',
+  verified: 'bg-ok/15 text-ok',
+  resolved: 'bg-line text-haze',
+};
+
+function AttendeeView({ state, slug, me, onReport }: { state: EventState; slug: string; me: Me | null; onReport: (category?: IncidentCategory) => void }) {
   const [open, setOpen] = useState<string | null>(null);
   if (open) return <IncidentRoom incidentId={open} state={state} slug={slug} me={me} onBack={() => setOpen(null)} />;
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-4">
-      <button onClick={onReport} className="w-full rounded-3xl border border-gel/40 bg-gel/10 p-5 text-left">
-        <span className="block text-lg font-semibold text-gel">Tell the crew</span>
-        <span className="mt-1 block text-sm text-haze">Lost something, lost your group, or something’s wrong. You’ll get a private chat with the crew.</span>
-      </button>
-      <h2 className="mt-6 mb-2 text-sm text-haze">Your reports</h2>
+    <div className="flex-1 overflow-y-auto px-4 pt-2 pb-6">
+      <h2 className="text-2xl font-extrabold tracking-tight">Need a hand?</h2>
+      <p className="mt-1 text-sm text-haze">Pick what happened. You’ll get a private chat with tonight’s crew. Nobody else sees it.</p>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        {HELP_OPTIONS.map((o) => (
+          <button key={o.id} onClick={() => onReport(o.id)} className="flex min-h-32 flex-col justify-between rounded-[1.5rem] bg-velvet p-4 text-left transition-transform active:scale-[0.98]">
+            <span className={`grid h-11 w-11 place-items-center rounded-2xl ${o.tone}`} aria-hidden><o.icon size={22} /></span>
+            <span>
+              <span className="block font-bold leading-tight">{o.label}</span>
+              <span className="block text-xs text-haze">{o.hint}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <h2 className="mt-7 mb-3 text-lg font-bold">Your reports</h2>
       {state.myIncidents.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-haze">You haven’t reported anything tonight.</p>
+        <p className="rounded-[1.5rem] border border-dashed border-line p-4 text-sm text-haze">Nothing reported tonight. Hope it stays that way.</p>
       ) : (
-        <IncidentList incidents={state.myIncidents} state={state} onOpen={setOpen} />
+        <ul className="flex flex-col gap-2">
+          {state.myIncidents.map((i) => {
+            const place = state.places.find((p) => p.id === i.placeId);
+            return (
+              <li key={i.id}>
+                <button onClick={() => setOpen(i.id)} className="flex w-full items-center gap-3 rounded-[1.5rem] bg-velvet p-4 text-left">
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold">{CATEGORY_LABEL[i.category]}{place ? ` · ${place.name}` : ''}</span>
+                    <span className="block truncate text-sm text-haze">{i.note}</span>
+                  </span>
+                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${STATUS_TONE[i.status]}`}>{attendeeLabel(i.status)}</span>
+                  <ChevronRight size={18} className="shrink-0 text-haze" aria-hidden />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       )}
+
+      <p className="mt-7 flex gap-3 rounded-[1.5rem] border border-gel/30 bg-gel/5 p-4 text-sm text-haze">
+        <Phone size={18} className="mt-0.5 shrink-0 text-gel" aria-hidden />
+        <span><span className="font-semibold text-mist">Emergency?</span> Go to the nearest staff member or call 112. Backstage doesn’t replace emergency services.</span>
+      </p>
     </div>
   );
 }

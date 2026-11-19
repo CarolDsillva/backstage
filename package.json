@@ -14,6 +14,7 @@
     "@nexconn/chat": "^26.5.0",
     "@nexconn/engine": "^26.5.0",
     "@supabase/supabase-js": "^2.119.1",
+    "lucide-react": "^1.76.0",
     "next": "16.4.6",
     "qrcode": "^1.5.4",
     "react": "19.3.0",

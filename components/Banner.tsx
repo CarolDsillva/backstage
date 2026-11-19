@@ -2,6 +2,7 @@
 import type { Condition, Place } from '@/lib/shared/types';
 import { effectiveCondition } from '@/lib/shared/conditions';
 import { timeAgo } from '@/lib/shared/time';
+import { Megaphone } from 'lucide-react';
 
 /** Latest verified crew update, pinned under the header. */
 export function Banner({
@@ -25,9 +26,9 @@ export function Banner({
   return (
     <button
       onClick={onOpenMap}
-      className="mx-3 mt-2 flex items-start gap-3 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3 text-left"
+      className="mx-4 mt-3 flex items-start gap-3 rounded-[1.5rem] border border-warn/30 bg-warn/10 px-4 py-3 text-left"
     >
-      <span aria-hidden className="mt-0.5 text-lg">📣</span>
+      <span aria-hidden className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-warn/20 text-warn"><Megaphone size={18} /></span>
       <span className="flex-1">
         <span className="block font-semibold text-warn">Crew update: {place?.name ?? 'venue'}</span>
         <span className="block text-sm text-mist">{c.notice}</span>

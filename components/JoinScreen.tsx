@@ -5,6 +5,7 @@ import { postJson } from '@/lib/client/useEventState';
 import { Poster } from './ui/Poster';
 import { AvatarStack } from './ui/Avatar';
 import type { EventRow, Phase } from '@/lib/shared/types';
+import { Users, Music, LifeBuoy } from 'lucide-react';
 
 type Preview = { event: EventRow; phase: Phase; people: number; faces: string[] };
 
@@ -14,7 +15,7 @@ function when(e: EventRow) {
 }
 
 /** Attendee front door: poster, who's here, one tap to join. */
-export function JoinScreen({ slug, onJoined }: { slug: string; onJoined: (token?: string) => void }) {
+export function JoinScreen({ slug, onJoined }: { slug: string; onJoined: (token?: string, name?: string) => void }) {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [sheet, setSheet] = useState(false);
   const [name, setName] = useState('');
@@ -36,7 +37,7 @@ export function JoinScreen({ slug, onJoined }: { slug: string; onJoined: (token?
     setError('');
     try {
       const r = await postJson<{ token: string }>('/api/join', { slug, name, as: 'audience' });
-      onJoined(r.token);
+      onJoined(r.token, name.trim());
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
@@ -71,9 +72,9 @@ export function JoinScreen({ slug, onJoined }: { slug: string; onJoined: (token?
         </div>
 
         <ul className="mt-5 grid grid-cols-3 gap-2 text-center text-xs text-haze">
-          <li className="rounded-2xl bg-velvet px-2 py-3"><span className="block text-lg">🙌</span>Meet people going solo</li>
-          <li className="rounded-2xl bg-velvet px-2 py-3"><span className="block text-lg">🎶</span>Vote the songs</li>
-          <li className="rounded-2xl bg-velvet px-2 py-3"><span className="block text-lg">🛟</span>Reach the crew</li>
+          <li className="flex flex-col items-center gap-2 rounded-2xl bg-velvet px-2 py-3"><Users size={20} className="text-violet-300" aria-hidden />Meet people going solo</li>
+          <li className="flex flex-col items-center gap-2 rounded-2xl bg-velvet px-2 py-3"><Music size={20} className="text-gel" aria-hidden />Vote the songs</li>
+          <li className="flex flex-col items-center gap-2 rounded-2xl bg-velvet px-2 py-3"><LifeBuoy size={20} className="text-warn" aria-hidden />Reach the crew</li>
         </ul>
 
         <button onClick={() => setSheet(true)} className="mt-auto h-14 rounded-full bg-spot text-lg font-bold text-ink shadow-[0_10px_30px_-10px_rgb(198_243_107/.6)]">

@@ -6,8 +6,9 @@ import { Banner } from './Banner';
 import { songQueue } from '@/lib/shared/cards';
 import { attendeeLabel } from '@/lib/shared/incidents';
 import type { CardType } from '@/lib/shared/types';
+import { Music, Users, Car, LifeBuoy, Heart, Mic, type LucideIcon } from 'lucide-react';
 
-type Action = { id: string; emoji: string; label: string; hint: string; tone: string; onClick: () => void };
+type Action = { id: string; icon: LucideIcon; label: string; hint: string; tone: string; onClick: () => void };
 
 /** Home for attendees: what's happening and the three things you can do right now. */
 export function TonightTab({
@@ -28,18 +29,18 @@ export function TonightTab({
 
   const actions: Action[] = [
     ...(phase === 'live'
-      ? [{ id: 'song', emoji: '🎶', label: 'Request a song', hint: 'The crowd votes it up', tone: 'bg-gel/15 text-gel', onClick: () => onNewCard('song') }]
+      ? [{ id: 'song', icon: Music, label: 'Request a song', hint: 'The crowd votes it up', tone: 'bg-gel/15 text-gel', onClick: () => onNewCard('song') }]
       : []),
     ...(phase !== 'after'
       ? [
-          { id: 'solo', emoji: '🙌', label: 'I’m going solo', hint: solo ? `${solo} going solo so far` : 'Meet people at the door', tone: 'bg-violet-500/20 text-violet-300', onClick: () => onNewCard('meetup') },
-          { id: 'ride', emoji: '🛺', label: 'Share a ride', hint: 'Offer or grab a seat', tone: 'bg-sky-500/15 text-sky-300', onClick: () => onNewCard('carpool') },
+          { id: 'solo', icon: Users, label: 'I’m going solo', hint: solo ? `${solo} going solo so far` : 'Meet people at the door', tone: 'bg-violet-500/20 text-violet-300', onClick: () => onNewCard('meetup') },
+          { id: 'ride', icon: Car, label: 'Share a ride', hint: 'Offer or grab a seat', tone: 'bg-sky-500/15 text-sky-300', onClick: () => onNewCard('carpool') },
         ]
       : [
-          { id: 'fan', emoji: '💌', label: 'Fan club', hint: `${state.fan.optins} joined for the next gig`, tone: 'bg-spot/15 text-spot', onClick: () => onOpen('fan') },
-          { id: 'ask', emoji: '🎤', label: `Ask ${event.artist}`, hint: 'Top questions get answered', tone: 'bg-gel/15 text-gel', onClick: () => onNewCard('question') },
+          { id: 'fan', icon: Heart, label: 'Fan club', hint: `${state.fan.optins} joined for the next gig`, tone: 'bg-spot/15 text-spot', onClick: () => onOpen('fan') },
+          { id: 'ask', icon: Mic, label: `Ask ${event.artist}`, hint: 'Top questions get answered', tone: 'bg-gel/15 text-gel', onClick: () => onNewCard('question') },
         ]),
-    { id: 'help', emoji: '🛟', label: 'Tell the crew', hint: 'Private, only crew see it', tone: 'bg-warn/15 text-warn', onClick: onReport },
+    { id: 'help', icon: LifeBuoy, label: 'Tell the crew', hint: 'Private, only crew see it', tone: 'bg-warn/15 text-warn', onClick: onReport },
   ];
 
   return (
@@ -59,7 +60,7 @@ export function TonightTab({
       <div className="grid grid-cols-2 gap-3 px-4">
         {actions.map((a) => (
           <button key={a.id} onClick={a.onClick} className="flex min-h-28 flex-col justify-between rounded-[1.5rem] bg-velvet p-4 text-left transition-transform active:scale-[0.98]">
-            <span className={`grid h-10 w-10 place-items-center rounded-2xl text-xl ${a.tone}`} aria-hidden>{a.emoji}</span>
+            <span className={`grid h-11 w-11 place-items-center rounded-2xl ${a.tone}`} aria-hidden><a.icon size={22} strokeWidth={2.2} /></span>
             <span>
               <span className="block font-bold leading-tight">{a.label}</span>
               <span className="block text-xs text-haze">{a.hint}</span>

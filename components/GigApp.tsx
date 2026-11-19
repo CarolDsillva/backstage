@@ -17,7 +17,8 @@ import { LeadControls } from './LeadControls';
 import { TonightTab } from './TonightTab';
 import { Onboarding, AUDIENCE_SLIDES, onboardedKey } from './Onboarding';
 import { Avatar } from './ui/Avatar';
-import type { CardType } from '@/lib/shared/types';
+import type { CardType, IncidentCategory } from '@/lib/shared/types';
+import { Sparkles, MessageCircle, Map as MapIcon, LifeBuoy, Headphones, Heart, Plus, type LucideIcon } from 'lucide-react';
 
 type Tab = 'tonight' | 'chat' | 'map' | 'help' | 'fan';
 
@@ -28,8 +29,10 @@ export function GigApp({ slug }: { slug: string }) {
   const [tab, setTab] = useState<Tab>('tonight');
   const [newCard, setNewCard] = useState<CardType | null | false>(false);
   const [reportPlace, setReportPlace] = useState<string | null | undefined>(undefined);
+  const [reportCategory, setReportCategory] = useState<IncidentCategory | undefined>(undefined);
   const [joinToken, setJoinToken] = useState<string | undefined>(undefined);
   const [onboarding, setOnboarding] = useState(false);
+  const [joinedName, setJoinedName] = useState('');
 
   const me = useMemo(
     () => (state ? { userId: state.me.userId, name: state.me.name, appKey: APP_KEY, token: joinToken } : null),
@@ -51,19 +54,45 @@ export function GigApp({ slug }: { slug: string }) {
     }
   }, [state?.me.userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (status === 'join') return <JoinScreen slug={slug} onJoined={(t) => { setJoinToken(t); void refetch(); }} />;
+  const tips = onboarding ? (
+    <Onboarding
+      slides={AUDIENCE_SLIDES}
+      storageKey={onboardedKey(slug, 'audience')}
+      name={(state?.me.name ?? joinedName).split(' ')[0]}
+      onDone={() => setOnboarding(false)}
+    />
+  ) : null;
+
+  if (status === 'join' && !joinedName) {
+    return (
+      <JoinScreen
+        slug={slug}
+        onJoined={(t, n) => {
+          setJoinToken(t);
+          setJoinedName(n ?? 'there');
+          // Show the tips right away; the room loads behind them.
+          try {
+            if (!localStorage.getItem(onboardedKey(slug, 'audience'))) setOnboarding(true);
+          } catch {
+            // storage blocked: skip tips
+          }
+          void refetch();
+        }}
+      />
+    );
+  }
   if (status === 'notfound') return <Centered title="This gig doesn’t exist" body="Check the link or scan the QR code at the venue again." />;
   if (status === 'error') return <Centered title="Can’t reach Backstage" body="Check your connection, then reload the page." action={{ label: 'Try again', onClick: refetch }} />;
-  if (!state) return <Splash />;
+  if (!state) return tips ?? <Splash />;
 
   const { phase, me: who } = state;
   const staff = who.role === 'crew' || who.role === 'lead';
-  const fourth: { id: Tab; label: string; icon: string } = phase === 'after' ? { id: 'fan', label: 'Fan club', icon: '💌' } : { id: 'map', label: 'Map', icon: '🗺️' };
-  const left: { id: Tab; label: string; icon: string }[] = [
-    { id: 'tonight', label: 'Tonight', icon: '✨' },
-    { id: 'chat', label: 'Chat', icon: '💬' },
+  const fourth: NavItem = phase === 'after' ? { id: 'fan', label: 'Fan club', icon: Heart } : { id: 'map', label: 'Map', icon: MapIcon };
+  const left: NavItem[] = [
+    { id: 'tonight', label: 'Tonight', icon: Sparkles },
+    { id: 'chat', label: 'Chat', icon: MessageCircle },
   ];
-  const right = [fourth, { id: 'help' as Tab, label: staff ? 'Crew' : 'Help', icon: staff ? '🎧' : '🛟' }];
+  const right: NavItem[] = [fourth, { id: 'help', label: staff ? 'Crew' : 'Help', icon: staff ? Headphones : LifeBuoy }];
 
   return (
     <div className="stage-light flex h-dvh flex-col">
@@ -111,7 +140,7 @@ export function GigApp({ slug }: { slug: string }) {
           </>
         )}
         {tab === 'map' && <VenueMap state={state} onReport={(placeId) => setReportPlace(placeId)} />}
-        {tab === 'help' && <CrewTab state={state} slug={slug} me={me} onReport={() => setReportPlace(null)} />}
+        {tab === 'help' && <CrewTab state={state} slug={slug} me={me} onReport={(c) => { setReportCategory(c); setReportPlace(null); }} />}
         {tab === 'fan' && <FanTab state={state} slug={slug} messages={room.messages} onChanged={refetch} />}
       </main>
 
@@ -121,9 +150,9 @@ export function GigApp({ slug }: { slug: string }) {
           <button
             onClick={() => setNewCard(null)}
             aria-label="Add to the room: song, meetup, ride, poll or report"
-            className="-mt-7 mb-2 grid h-16 w-16 place-items-center rounded-full bg-spot text-3xl font-light text-ink shadow-[0_12px_30px_-8px_rgb(198_243_107/.7)] ring-4 ring-night transition-transform active:scale-95"
+            className="-mt-7 mb-2 grid h-16 w-16 place-items-center rounded-full bg-spot text-ink shadow-[0_12px_30px_-8px_rgb(198_243_107/.7)] ring-4 ring-night transition-transform active:scale-95"
           >
-            +
+            <Plus size={30} strokeWidth={2.5} aria-hidden />
           </button>
         </div>
         {right.map((t) => <NavButton key={t.id} t={t} active={tab === t.id} onClick={() => setTab(t.id)} />)}
@@ -144,25 +173,27 @@ export function GigApp({ slug }: { slug: string }) {
           state={state}
           slug={slug}
           initialPlaceId={reportPlace}
-          onClose={() => setReportPlace(undefined)}
-          onCreated={() => { setReportPlace(undefined); setTab('help'); void refetch(); }}
+          initialCategory={reportCategory}
+          onClose={() => { setReportPlace(undefined); setReportCategory(undefined); }}
+          onCreated={() => { setReportPlace(undefined); setReportCategory(undefined); setTab('help'); void refetch(); }}
         />
       )}
-      {onboarding && (
-        <Onboarding slides={AUDIENCE_SLIDES} storageKey={onboardedKey(slug, 'audience')} name={who.name.split(' ')[0]} onDone={() => setOnboarding(false)} />
-      )}
+      {tips}
     </div>
   );
 }
 
-function NavButton({ t, active, onClick }: { t: { label: string; icon: string }; active: boolean; onClick: () => void }) {
+type NavItem = { id: Tab; label: string; icon: LucideIcon };
+
+function NavButton({ t, active, onClick }: { t: NavItem; active: boolean; onClick: () => void }) {
+  const Icon = t.icon;
   return (
     <button
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       className={`flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold ${active ? 'text-spot' : 'text-haze'}`}
     >
-      <span aria-hidden className={`text-lg leading-none transition-transform ${active ? 'scale-110' : 'opacity-80'}`}>{t.icon}</span>
+      <Icon size={22} strokeWidth={active ? 2.4 : 1.8} aria-hidden className="transition-transform" />
       {t.label}
     </button>
   );

@@ -11,16 +11,18 @@ export function ReportSheet({
   state,
   slug,
   initialPlaceId,
+  initialCategory,
   onClose,
   onCreated,
 }: {
   state: EventState;
   slug: string;
   initialPlaceId: string | null;
+  initialCategory?: IncidentCategory;
   onClose: () => void;
   onCreated: (id: string) => void;
 }) {
-  const [category, setCategory] = useState<IncidentCategory>(initialPlaceId ? 'place_problem' : 'lost_item');
+  const [category, setCategory] = useState<IncidentCategory>(initialCategory ?? (initialPlaceId ? 'place_problem' : 'lost_item'));
   const [placeId, setPlaceId] = useState(initialPlaceId ?? '');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);

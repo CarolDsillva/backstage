@@ -1,5 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
+import { Camera, Plus, SendHorizontal } from 'lucide-react';
 
 type Props = {
   onText: (t: string) => Promise<void>;
@@ -22,10 +23,11 @@ export function Composer({ onText, onImage, onPlus, placeholder = 'Say something
     if (!t || sending) return;
     setSending(true);
     setError('');
+    setText(''); // feels instant; restored if sending fails
     try {
       await onText(t);
-      setText('');
     } catch {
+      setText(t);
       setError('Message not sent. Check your connection and tap send again.');
     } finally {
       setSending(false);
@@ -47,32 +49,26 @@ export function Composer({ onText, onImage, onPlus, placeholder = 'Say something
     }
   }
 
+  const iconBtn = 'grid h-11 w-11 shrink-0 place-items-center rounded-full text-haze transition-colors hover:text-mist disabled:opacity-40';
+
   return (
-    <form onSubmit={send} className="border-t border-line bg-night/95 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur">
-      {error && <p role="alert" className="mb-1 px-1 text-xs text-gel">{error}</p>}
-      {progress !== null && <p className="mb-1 px-1 text-xs text-haze">Uploading photo… {Math.round(progress)}%</p>}
-      <div className="flex items-end gap-2">
+    <form onSubmit={send} className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      {error && <p role="alert" className="mb-1.5 px-2 text-xs text-gel">{error}</p>}
+      {progress !== null && (
+        <div className="mb-2 h-1 overflow-hidden rounded-full bg-velvet" aria-label={`Uploading photo, ${Math.round(progress)}%`}>
+          <div className="h-full bg-spot transition-[width]" style={{ width: `${progress}%` }} />
+        </div>
+      )}
+      <div className="flex items-end gap-1 rounded-[1.75rem] border border-line bg-velvet p-1 focus-within:border-spot/60">
         {onPlus && (
-          <button
-            type="button"
-            onClick={onPlus}
-            disabled={disabled}
-            aria-label="Add a poll, song request or meetup"
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-velvet-2 text-2xl text-spot disabled:opacity-40"
-          >
-            +
+          <button type="button" onClick={onPlus} disabled={disabled} aria-label="Add a poll, song request or meetup" className={iconBtn}>
+            <Plus size={22} />
           </button>
         )}
         {onImage && (
           <>
-            <button
-              type="button"
-              onClick={() => file.current?.click()}
-              disabled={disabled || progress !== null}
-              aria-label="Send a photo"
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-velvet-2 text-lg disabled:opacity-40"
-            >
-              📷
+            <button type="button" onClick={() => file.current?.click()} disabled={disabled || progress !== null} aria-label="Send a photo" className={iconBtn}>
+              <Camera size={21} />
             </button>
             <input ref={file} type="file" accept="image/*" className="hidden" onChange={pick} />
           </>
@@ -92,13 +88,14 @@ export function Composer({ onText, onImage, onPlus, placeholder = 'Say something
           }}
           placeholder={disabled ? 'Connecting to the room…' : placeholder}
           maxLength={1000}
-          className="max-h-32 min-h-11 flex-1 resize-none rounded-3xl border border-line bg-velvet px-4 py-2.5 text-mist outline-none placeholder:text-haze/60 focus:border-spot"
+          className="max-h-32 min-h-11 flex-1 resize-none bg-transparent px-2 py-2.5 text-mist outline-none placeholder:text-haze/60"
         />
         <button
           disabled={disabled || sending || !text.trim()}
-          className="h-11 shrink-0 rounded-full bg-spot px-4 font-semibold text-ink disabled:opacity-40"
+          aria-label="Send message"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-spot text-ink transition-opacity disabled:opacity-30"
         >
-          Send
+          <SendHorizontal size={20} strokeWidth={2.4} />
         </button>
       </div>
     </form>
