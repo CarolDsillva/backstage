@@ -1,0 +1,9 @@
+{
+  "name": "Backstage",
+  "short_name": "Backstage",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#17122a",
+  "theme_color": "#17122a",
+  "icons": []
+}

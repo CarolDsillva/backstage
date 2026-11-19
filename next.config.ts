@@ -1,9 +1,7 @@
 import type { NextConfig } from "next";
 
+// Every screen is live per-user data, so we opt out of build-time prerendering/caching.
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
   turbopack: {
     rules: {
       "*.css": {

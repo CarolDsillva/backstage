@@ -1,26 +1,70 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-night: #17122a;
+  --color-velvet: #221b3a;
+  --color-velvet-2: #2d2449;
+  --color-line: #3a3058;
+  --color-haze: #a79fc2;
+  --color-mist: #ece8f7;
+  --color-spot: #ffc861;
+  --color-gel: #ff6f91;
+  --color-ok: #5fd3a6;
+  --color-paper: #f6eedb;
+  --color-ink: #2a2233;
+  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-hand: var(--font-marker), ui-rounded, cursive;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background: var(--color-night);
+  color: var(--color-mist);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-spot);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* The room is lit from the stage. */
+.stage-light {
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgb(255 111 145 / 0.22), transparent 60%),
+    radial-gradient(80% 40% at 85% -5%, rgb(255 200 97 / 0.14), transparent 60%),
+    var(--color-night);
+}
+
+/* Paper setlist taped to the stage: the one loud element. */
+.setlist {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.25), 0 12px 24px -12px rgb(0 0 0 / 0.6);
+  position: relative;
+}
+.setlist::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 64px;
+  height: 18px;
+  transform: translateX(-50%) rotate(-2deg);
+  background: rgb(255 255 255 / 0.55);
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

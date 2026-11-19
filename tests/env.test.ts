@@ -14,7 +14,7 @@ describe('getEnv', () => {
   beforeEach(() => resetEnvCache());
 
   it('throws listing missing keys', () => {
-    const { NEXCONN_APP_SECRET, ...rest } = full;
+    const { NEXCONN_APP_SECRET: _omit, ...rest } = full;
     expect(() => getEnv(rest)).toThrow(/NEXCONN_APP_SECRET/);
   });
 
