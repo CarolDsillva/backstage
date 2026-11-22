@@ -6,6 +6,9 @@ import { issueToken, joinGroup } from '@/lib/server/nexconn';
 import { currentUserId, setSessionCookie } from '@/lib/server/auth';
 import { errorResponse } from '@/lib/server/http';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 const join = makeJoin({
   getEvent: dbm.getEventBySlug,
   getUser: dbm.getUser,

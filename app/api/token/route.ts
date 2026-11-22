@@ -3,6 +3,9 @@ import { getUser } from '@/lib/server/db';
 import { issueToken } from '@/lib/server/nexconn';
 import { errorResponse, HttpError } from '@/lib/server/http';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 export async function GET() {
   try {
     const userId = await currentUserId();

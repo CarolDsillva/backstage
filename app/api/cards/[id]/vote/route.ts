@@ -5,6 +5,9 @@ import { errorResponse, HttpError } from '@/lib/server/http';
 import { decideVote } from '@/lib/shared/cards';
 import { signal } from '@/lib/server/broadcast';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 const body = z.object({ slug: z.string(), option: z.number().int().optional() });
 
 export async function POST(req: Request, ctx: RouteContext<'/api/cards/[id]/vote'>) {

@@ -3,6 +3,9 @@ import { requireMember } from '@/lib/server/auth';
 import { bumpActivity } from '@/lib/server/db';
 import { errorResponse, HttpError } from '@/lib/server/http';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 const body = z.object({ slug: z.string(), n: z.number().int().min(1).max(200) });
 
 /** Counts messages a person sent (for the traction stats). Called at most every 30s per tab. */

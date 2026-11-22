@@ -6,6 +6,9 @@ import { post, signal } from '@/lib/server/broadcast';
 import { BS_TYPES } from '@/lib/shared/types';
 import { isTeam } from '@/lib/shared/teams';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 const input = z.object({ action: z.enum(['take', 'fix', 'reopen']) });
 
 /** "On it" (take), "Fixed" (fix) or reopen. Compare-and-set, so double taps can't both win. */

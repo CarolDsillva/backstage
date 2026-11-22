@@ -5,6 +5,9 @@ import { errorResponse, HttpError } from '@/lib/server/http';
 import { rolesFor } from '@/lib/shared/permissions';
 import { signal } from '@/lib/server/broadcast';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 const body = z.object({ phase: z.enum(['before', 'live', 'after']).nullable() });
 
 export async function POST(req: Request, ctx: RouteContext<'/api/event/[slug]/phase'>) {

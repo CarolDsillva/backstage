@@ -8,6 +8,9 @@ import { post, signal } from '@/lib/server/broadcast';
 import { BS_TYPES } from '@/lib/shared/types';
 import { TEAM_IDS, team, type TeamId } from '@/lib/shared/teams';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 const input = z.object({
   team: z.enum(TEAM_IDS as [TeamId, ...TeamId[]]),
   title: z.string().trim().min(2, 'Say what the problem is').max(80, 'Keep the title under 80 characters'),

@@ -4,6 +4,9 @@ import { listCrew, listIssues, listRadio, teamChannelIds } from '@/lib/server/cr
 import { errorResponse } from '@/lib/server/http';
 import { phaseOf } from '@/lib/shared/phase';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 /**
  * Crew bootstrap: everything the HQ, channels and team rooms need, in ONE request.
  * All queries run in parallel, so the screen costs a single round trip to the database.

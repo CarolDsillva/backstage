@@ -5,6 +5,9 @@ import { errorResponse, HttpError } from '@/lib/server/http';
 import { post, signal } from '@/lib/server/broadcast';
 import { BS_TYPES } from '@/lib/shared/types';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 const input = z.object({ text: z.string().trim().min(2).max(200) });
 
 /** Show caller announcement to all hands (Control channel). Leads only. */

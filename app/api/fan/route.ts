@@ -3,6 +3,9 @@ import { addOptin, upsertFeedback } from '@/lib/server/db';
 import { errorResponse, HttpError } from '@/lib/server/http';
 import { fanInput } from '@/lib/shared/fan';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 export async function POST(req: Request) {
   try {
     const p = fanInput.safeParse(await req.json().catch(() => ({})));

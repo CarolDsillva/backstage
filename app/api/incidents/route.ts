@@ -9,6 +9,9 @@ import { newId } from '@/lib/server/ids';
 import { post, signal } from '@/lib/server/broadcast';
 import { BS_TYPES } from '@/lib/shared/types';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 export async function POST(req: Request) {
   try {
     const p = incidentInput.safeParse(await req.json().catch(() => ({})));

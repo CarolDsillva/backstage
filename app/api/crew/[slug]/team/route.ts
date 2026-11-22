@@ -5,6 +5,9 @@ import { errorResponse, HttpError } from '@/lib/server/http';
 import { signal } from '@/lib/server/broadcast';
 import { TEAM_IDS, channelsFor, type TeamId } from '@/lib/shared/teams';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 const input = z.object({ team: z.enum(TEAM_IDS as [TeamId, ...TeamId[]]) });
 
 /** Pick (or change) your team, then join Control + your team's channel (leads join every channel). */

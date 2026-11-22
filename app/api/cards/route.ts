@@ -8,6 +8,9 @@ import { CARD_MESSAGE_TYPE } from '@/lib/shared/types';
 import { newId } from '@/lib/server/ids';
 import { post, signal } from '@/lib/server/broadcast';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 const body = z.object({ slug: z.string() }).and(cardInput);
 
 export async function POST(req: Request) {

@@ -3,6 +3,9 @@ import { eventStats } from '@/lib/server/db';
 import { errorResponse } from '@/lib/server/http';
 import { rolesFor } from '@/lib/shared/permissions';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 export async function GET(req: Request) {
   try {
     const c = await requireMember(new URL(req.url).searchParams.get('slug') ?? '', rolesFor('stats'));

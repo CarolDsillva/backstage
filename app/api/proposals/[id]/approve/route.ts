@@ -6,6 +6,9 @@ import { makeDecide } from '@/lib/server/decide';
 import { post, signal } from '@/lib/server/broadcast';
 import { BS_TYPES } from '@/lib/shared/types';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 const body = z.object({
   slug: z.string(),
   decision: z.enum(['approve', 'reject']),

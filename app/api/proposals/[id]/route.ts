@@ -3,6 +3,9 @@ import { getIncident, getProposal } from '@/lib/server/db';
 import { errorResponse, HttpError } from '@/lib/server/http';
 import { isStaff } from '@/lib/server/rooms';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 export async function GET(req: Request, ctx: RouteContext<'/api/proposals/[id]'>) {
   try {
     const { id } = await ctx.params;

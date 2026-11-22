@@ -4,6 +4,9 @@ import { errorResponse } from '@/lib/server/http';
 import { phaseOf } from '@/lib/shared/phase';
 import { isStaff } from '@/lib/server/rooms';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 export async function GET(_req: Request, ctx: RouteContext<'/api/event/[slug]'>) {
   try {
     const { slug } = await ctx.params;

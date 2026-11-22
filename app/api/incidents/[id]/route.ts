@@ -6,6 +6,9 @@ import { canTransition } from '@/lib/shared/incidents';
 import { isStaff } from '@/lib/server/rooms';
 import { signal } from '@/lib/server/broadcast';
 
+/** Run next to the Supabase database (Sydney): every request makes several DB round trips. */
+export const preferredRegion = 'syd1';
+
 async function load(id: string, slug: string) {
   const c = await requireMember(slug);
   const inc = await getIncident(id);
