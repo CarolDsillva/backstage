@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140" fill="none">
+  <rect x="1.5" y="1.5" width="97" height="137" rx="7" fill="#1D1150" stroke="#3B2A78" stroke-width=".8"/>
+  <!-- crowd floor -->
+  <path d="M10 34 H90 V100 Q50 108 10 100 Z" fill="#2A1863"/>
+  <g fill="#7C5CD6" opacity=".9">
+    <circle cx="30" cy="44" r="1"/><circle cx="38" cy="48" r="1"/><circle cx="46" cy="42" r="1"/><circle cx="54" cy="47" r="1"/><circle cx="62" cy="43" r="1"/><circle cx="70" cy="49" r="1"/>
+    <circle cx="26" cy="58" r="1"/><circle cx="34" cy="62" r="1"/><circle cx="42" cy="57" r="1"/><circle cx="50" cy="61" r="1"/><circle cx="58" cy="56" r="1"/><circle cx="66" cy="62" r="1"/><circle cx="74" cy="58" r="1"/>
+    <circle cx="30" cy="72" r="1"/><circle cx="40" cy="76" r="1"/><circle cx="50" cy="71" r="1"/><circle cx="60" cy="77" r="1"/><circle cx="70" cy="72" r="1"/>
+    <circle cx="36" cy="86" r="1"/><circle cx="48" cy="88" r="1"/><circle cx="60" cy="86" r="1"/>
+  </g>
+  <!-- stage -->
+  <rect x="22" y="6" width="56" height="16" rx="3.5" fill="#0B0620"/>
+  <rect x="26" y="9" width="48" height="2" rx="1" fill="#EC4F9B" opacity=".9"/>
+  
+  <!-- barrier -->
+  <path d="M18 30 H82" stroke="#B9A2FF" stroke-width="1" stroke-dasharray="2 1.4"/>
+  <!-- bars -->
+  <rect x="5" y="44" width="9" height="16" rx="2.5" fill="#3F3014"/>
+  <rect x="86" y="44" width="9" height="16" rx="2.5" fill="#3F3014"/>
+  <!-- side rooms -->
+  <rect x="5" y="88" width="16" height="12" rx="2.5" fill="#4A1D3F"/>
+  <rect x="74" y="104" width="20" height="13" rx="2.5" fill="#15315A"/>
+  <rect x="10" y="112" width="22" height="12" rx="2.5" fill="#38215F"/>
+  <!-- entry -->
+  <path d="M38 138 V128 H62 V138" stroke="#B9A2FF" stroke-width="1"/>
+  <path d="M96 74 V86" stroke="#2FB392" stroke-width="2" stroke-linecap="round"/>
+</svg>

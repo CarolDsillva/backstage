@@ -43,11 +43,12 @@ export function mapEvent(r: EventDb): EventSecrets {
 /** Strip secrets before sending to a client. */
 export function publicEvent(e: EventSecrets): EventRow {
   const { crewCode: _c, leadCode: _l, artistCode: _a, ...rest } = e;
-  return rest;
+  const { viewerCode: _v, ...refs } = rest.refs ?? {};
+  return { ...rest, refs };
 }
 
 // Small per-instance cache: the event row and channel ids are read on every request but rarely change.
-const EVENT_TTL_MS = 5_000;
+const EVENT_TTL_MS = 30_000;
 const eventCache = new Map<string, { at: number; ev: EventSecrets | null }>();
 const channelCache = new Map<string, string>();
 

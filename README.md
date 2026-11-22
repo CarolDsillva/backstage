@@ -4,15 +4,27 @@
 
 Built for the Nexconn Build Challenge 2026 with the **Nexconn Chat SDK**, the **Nexconn Chat UI kit** and the **Nexconn Call SDK**.
 
+## Try it
+
+Open the app. The home screen lists three events:
+
+| Event | How to get in | What you see |
+|---|---|---|
+| **Demo Fest** | No code. Pick a role: Show caller, Security or Runner. | A practice event that is already running. Ten scripted demo crew members (clearly labelled as demo) keep posting real messages, issues and fixes through the Nexconn server API every ~20 s. As show caller you get a hands-on tour: a spotlight shows what to tap, and you actually take a critical issue, message Security (they reply), key the walkie, check the map and mark the issue fixed. |
+| **Mic Drop** (Raahe's open mic at a café in Bangalore) | Viewer code `micdrop-watch` (read-only) or a crew/lead code. | A staged show night run by Smera, RJ, Shashi, Vaibhav, Niharika and Divyansh: sign-ups over capacity, a crackling mic, the coffee machine tripping the power, the crowd spilling onto the footpath, end-of-night walkie clips. **This is seeded demo data, not real usage.** It was sent through the real Nexconn server API by `scripts/seed-events.ts` and `scripts/seed-clips.ts` (the voice clips are text-to-speech stand-ins). |
+| **Raahe Unplugged** | Not open yet. | Listed as an upcoming event. |
+
 ## Crew side (`/e/<slug>/crew`)
 
-| Screen | What it does |
+| Tab | What it does |
 |---|---|
-| **HQ** | Event card with a show clock (doors in / live / wrapped) and open-issue, crew and live-radio counts; quick refs (run of show, who to call, gate/wifi/emergency notes); show-caller announcements to all hands; a **live map** where every open issue is a pin coloured by team; a **live feed** of issues, fixes, radio calls and announcements from every room you hear. |
-| **Channels** | The walkie dial: CH01 Control to CH09 Medical, each with unread count, open issues and an ON AIR light. Crew hear Control + their own team; the show caller hears everything. |
-| **Team room** | Chat with issue cards and an issue strip (**On it** / **Fixed**, compare-and-set so two people can't both take it). A big **hold-to-talk** button: when the channel's radio is live it opens your mic on the group audio call; off air, holding it records a voice clip that drops into the chat (and plays out loud for anyone with *Radio on*). **Raise issue** with one-tap starters per team, severity and place. Critical issues are also called on Control. |
-| **Inbox** | Every channel and message in one place, using the ready-made **Nexconn Chat UI kit**, with Backstage cards rendered inside it. |
-| **First-time demo** | "The night heats up": team passes fanning in, issues popping onto the map as the clock runs and a heat meter climbs, a walkie keying up, an issue going Open → On it → Fixed. Replay it from the ▶ button. |
+| **Alerts** | The event as an orb with every team orbiting it; teams with open issues light up. Open / critical / fixed counts, the latest all-hands call, every open issue with **I’m on it** / **Fixed** (compare-and-set, so two people can’t both take it), and a feed of everything happening across the event. Turn on browser alerts for critical issues. |
+| **Chats** | A messenger: one chat per team (Control, Artist, Production, Hospitality, Security, Runners, Stalls, FOH, Medical) with last message, unread count and a red dot when a critical issue is open. In a chat: text, photos, hold-the-mic voice clips, and **Raise issue** from the + menu. Viewers can read but not post. A “Classic inbox” entry opens the ready-made Nexconn Chat UI kit. |
+| **Walkie** | A walkie-talkie: LCD screen, channel knob, big **push to talk**. Each transmission is a Nexconn HD voice message on that team’s channel, so it is also in the chat history; with the speaker on, new transmissions play out loud and the screen shows who is talking. **Open line** starts a live group audio call (Call SDK). |
+| **Map** | The venue with every open issue pinned where it is; tap a spot to see its issues or raise one there. |
+| **+** | Raise an issue: team, one-tap starters, severity, place. Critical issues are echoed to Control. |
+
+In-app toasts show new messages from other channels, and issues beep (two tones for critical).
 
 ## Audience side (`/e/<slug>`)
 
@@ -22,8 +34,10 @@ The original gig room is unchanged: going-solo meetups, ride shares, song reques
 
 - **Chat SDK (messages, channels, history):** one group channel per team, plus the gig, crew and per-report rooms; text, image and **HD voice** messages; message history; custom message types `BS:Issue`, `BS:IssueUpd`, `BS:Radio`, `BS:Announce` (and the audience cards), plus the non-persisted `BS:State` signal that refreshes HQ live. Cards are only rendered when the system user sent them (forged cards from devtools are ignored).
 - **Server API:** token issuance, group create/join and server-sent cards (SHA1 signing, Singapore primary/backup failover).
-- **Chat UI kit (`@nexconn/chatui`):** the Inbox. Initialised and `ready()` before connect, with our user/group names supplied through `ServiceHooks` and a custom element for Backstage cards.
+- **Chat UI kit (`@nexconn/chatui`):** the Classic inbox. Initialised and `ready()` before connect, with our user/group names supplied through `ServiceHooks` and a custom element for Backstage cards.
 - **Call SDK (`@nexconn/call`):** team radio = a multi-party **audio** call per channel. Mics are muted by default (`enableMicrophone(false)`) and opened only while you hold the button; `onRemoteMicrophoneStateChanged` shows who is talking; late joiners `joinCall(callId)` using the call id the server stores in `radio_sessions`.
+
+**Why viewers sign in as pre-joined accounts:** Nexconn only shows a group’s history from the moment a member joined. So the seed script puts 40 read-only viewer accounts in every Mic Drop channel *before* replaying the night, and the viewer code signs you in as one of them.
 
 ## Verified vs not yet verified (22 Nov 2026)
 
@@ -44,8 +58,8 @@ Tested live with two separate sessions (show caller on `localhost`, a Security c
 2. In the Supabase SQL editor, run `supabase/schema.sql`, then `supabase/2026-11-22-crew-comms.sql`.
 3. `cp .env.example .env.local` and fill it in.
 4. `npm install`
-5. `npx tsx --env-file=.env.local scripts/seed.ts 0` seeds the demo gig. Set the crew, lead and artist codes with `CREW_CODE`, `LEAD_CODE` and `ARTIST_CODE`.
-6. `npm run dev`, then open `/e/raahe-live/crew` (crew) or `/e/raahe-live` (audience).
+5. Set `CREW_CODE`, `LEAD_CODE`, `ARTIST_CODE` and `VIEWER_CODE` in `.env.local`, then run `npx tsx --env-file=.env.local scripts/seed-events.ts` (creates Demo Fest and Mic Drop, enrols the crews and replays the night). After deploying, `npx tsx --env-file=.env.local scripts/seed-clips.ts https://<your-domain>` posts the walkie clips.
+6. `npm run dev`, then open `/`.
 
 ## Tests
 

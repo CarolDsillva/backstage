@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF6FB5"/>
+      <stop offset=".55" stop-color="#C2247F"/>
+      <stop offset="1" stop-color="#5B2BB5"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".35" r=".6">
+      <stop offset="0" stop-color="#fff" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="120" height="120" rx="34" fill="url(#bg)"/>
+  <rect width="120" height="120" rx="34" fill="url(#glow)"/>
+  <!-- sound waves -->
+  <path d="M30 44a34 34 0 0 0 0 32" stroke="#fff" stroke-opacity=".55" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M20 36a46 46 0 0 0 0 48" stroke="#fff" stroke-opacity=".3" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M90 44a34 34 0 0 1 0 32" stroke="#fff" stroke-opacity=".55" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M100 36a46 46 0 0 1 0 48" stroke="#fff" stroke-opacity=".3" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <!-- mic -->
+  <rect x="48" y="26" width="24" height="40" rx="12" fill="#fff"/>
+  <path d="M50 38h20M50 46h20M50 54h20" stroke="#C2247F" stroke-opacity=".35" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M40 58a20 20 0 0 0 40 0" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M60 78v12M48 92h24" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  <!-- sparkle -->
+  <path d="M92 18l2.4 6.6L101 27l-6.6 2.4L92 36l-2.4-6.6L83 27l6.6-2.4z" fill="#FFE3A3"/>
+</svg>

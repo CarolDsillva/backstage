@@ -85,6 +85,14 @@ export type EventRefs = {
   sets?: { time: string; name: string }[];
   contacts?: { role: string; name: string; channel?: string }[];
   notes?: string[];
+  /** Server-only: read-only viewer code (stripped by publicEvent). */
+  viewerCode?: string;
+  /** Number of pre-joined read-only viewer accounts (rv_01..). */
+  viewerPool?: number;
+  /** Demo event: anyone can enter by picking a role, and scripted demo crew keep it busy. */
+  demo?: boolean;
+  /** Short label for the event card (e.g. "Mumbai · Tonight"). */
+  tagline?: string;
 };
 
 /** Custom Nexconn message types. Registered on the client before connect. */

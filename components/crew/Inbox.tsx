@@ -26,12 +26,9 @@ export function Inbox() {
   }, [ready]);
 
   return (
-    <div className="flex h-full flex-col px-3 pb-28">
-      <div className="mb-3 px-1">
-        <h1 className="font-display text-[30px] leading-none font-extrabold tracking-tight">Inbox</h1>
-        <p className="mt-1 text-sm text-white/60">All your channels and messages, powered by the Nexconn Chat UI kit.</p>
-      </div>
-      <div className="min-h-0 flex-1 overflow-hidden rounded-[28px] bg-white text-[#05060d] shadow-2xl">
+    <div className="flex h-full flex-col px-3 pb-3">
+      <p className="mb-2 px-1 text-sm text-[#B8ABE6]">Every channel and message in the ready-made Nexconn Chat UI kit.</p>
+      <div className="min-h-0 flex-1 overflow-hidden rounded-[24px] bg-[#251856] text-white">
         {!ready && <p className="p-6 text-sm text-black/50">Opening your inbox…</p>}
         <div ref={host} className="h-full" />
       </div>

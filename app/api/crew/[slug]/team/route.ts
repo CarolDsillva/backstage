@@ -16,7 +16,7 @@ export async function POST(req: Request, ctx: RouteContext<'/api/crew/[slug]/tea
     const { slug } = await ctx.params;
     const p = input.safeParse(await req.json().catch(() => ({})));
     if (!p.success) throw new HttpError(400, 'Pick a team');
-    const c = await requireCrew(slug);
+    const c = await requireCrew(slug, { write: true });
     await setTeam(c.ev.id, c.userId, p.data.team);
     const channels = await joinTeamChannels(c.ev.id, c.ev.title, c.userId, c.role, p.data.team);
     if (channels.control) await signal(channels.control, { kind: 'crew' });

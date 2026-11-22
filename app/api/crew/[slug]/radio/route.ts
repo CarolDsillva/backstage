@@ -24,7 +24,7 @@ export async function POST(req: Request, ctx: RouteContext<'/api/crew/[slug]/rad
     const { slug } = await ctx.params;
     const p = input.safeParse(await req.json().catch(() => ({})));
     if (!p.success) throw new HttpError(400, 'Bad radio request');
-    const c = await requireCrew(slug);
+    const c = await requireCrew(slug, { write: true });
     assertTeamAccess(c, p.data.team);
     const channelId = await ensureTeamChannel(c.ev.id, c.ev.title, p.data.team);
     if (p.data.live) {

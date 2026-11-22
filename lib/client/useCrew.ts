@@ -8,7 +8,7 @@ import { team as teamOf, type TeamId } from '@/lib/shared/teams';
 export type CrewState = {
   event: EventRow;
   phase: Phase;
-  me: { userId: string; name: string; role: Role; team: TeamId | null };
+  me: { userId: string; name: string; role: Role; team: TeamId | null; viewer?: boolean };
   canOpen: TeamId[];
   channels: Partial<Record<TeamId, string>>;
   places: Place[];
@@ -83,7 +83,7 @@ export function useCrew(slug: string) {
     if (!state || conn !== 'online' || seeded.current) return;
     seeded.current = true;
     void Promise.all(Object.entries(state.channels).map(async ([t, ch]) => {
-      const hist = await loadHistory(ch!, 15).catch(() => [] as ChatMsg[]);
+      const hist = await loadHistory(ch!, 30).catch(() => [] as ChatMsg[]);
       return hist.filter((m) => isRenderable(m) && m.type !== BS_TYPES.state).map((m) => ({ ...m, team: t as TeamId }));
     })).then((all) => setFeed((prev) => merge(prev, all.flat())));
   }, [state, conn]);
@@ -108,7 +108,7 @@ export function useCrew(slug: string) {
 
 function merge(prev: FeedItem[], add: FeedItem[]) {
   const seen = new Set(prev.map((p) => p.id));
-  return [...prev, ...add.filter((a) => !seen.has(a.id))].sort((a, b) => b.sentAt - a.sentAt).slice(0, 120);
+  return [...prev, ...add.filter((a) => !seen.has(a.id))].sort((a, b) => b.sentAt - a.sentAt).slice(0, 300);
 }
 
 export async function crewPost<T = unknown>(url: string, body: unknown, method = 'POST'): Promise<T> {

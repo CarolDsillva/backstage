@@ -29,6 +29,7 @@ export type SetupOpts = { call?: boolean; chatUI?: boolean };
 type CallSdk = typeof import('@nexconn/call');
 let callSdk: CallSdk | null = null;
 let chatUIApp: import('@nexconn/chatui').NCChatUIApplication | null = null;
+let chatUIModule: Promise<typeof import('@nexconn/chatui')> | null = null;
 
 /** Names the Chat UI kit shows for users/groups; filled from the crew bootstrap. */
 const profiles = {
@@ -109,13 +110,16 @@ let reconnecting = false;
 /** Initialise the engine, custom types and handlers exactly once. */
 function setup(appKey: string, opts: SetupOpts = {}) {
   setupPromise ??= (async () => {
+    // Fetch all three SDK bundles in parallel instead of one after another.
+    const callP = opts.call ? import('@nexconn/call').catch((e) => { console.warn('Call SDK unavailable', e); return null; }) : null;
+    if (opts.chatUI) chatUIModule ??= import('@nexconn/chatui');
     const sdk = await loadSdk();
     const { NCEngine, MessageHandler, ConnectionStatusHandler } = sdk;
     if (opts.call) {
       // The Call SDK must install its plugin before NCEngine.initialize().
       try {
-        callSdk = await import('@nexconn/call');
-        callSdk.NCCallEngine.install();
+        callSdk = await callP;
+        callSdk?.NCCallEngine.install();
       } catch (e) {
         console.warn('Call SDK unavailable', e);
         callSdk = null;
@@ -182,7 +186,7 @@ export function cardDigest(type: string, c: Record<string, unknown>): string {
 /** The ready-made Nexconn Chat UI kit (inbox). Must be ready() before connect. */
 async function setupChatUI() {
   try {
-    const { NCChatUIApplication } = await import('@nexconn/chatui');
+    const { NCChatUIApplication } = await (chatUIModule ??= import('@nexconn/chatui'));
     const app = NCChatUIApplication.initialize({
       language: 'en_US',
       hooks: {

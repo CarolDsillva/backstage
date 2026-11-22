@@ -22,7 +22,7 @@ export async function GET(_req: Request, ctx: RouteContext<'/api/crew/[slug]'>) 
     return Response.json({
       event: publicEvent(c.ev),
       phase: phaseOf(new Date(), new Date(c.ev.startsAt), new Date(c.ev.endsAt), c.ev.phaseOverride),
-      me: { userId: c.userId, name: c.name, role: c.role, team: c.team },
+      me: { userId: c.userId, name: c.name, role: c.role, team: c.team, viewer: c.viewer },
       canOpen: c.canOpen,
       channels: open,
       places, conditions, issues, crew, radio,

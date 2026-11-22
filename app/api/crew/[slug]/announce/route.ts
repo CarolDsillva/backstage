@@ -16,7 +16,7 @@ export async function POST(req: Request, ctx: RouteContext<'/api/crew/[slug]/ann
     const { slug } = await ctx.params;
     const p = input.safeParse(await req.json().catch(() => ({})));
     if (!p.success) throw new HttpError(400, 'Write the announcement (2–200 characters)');
-    const c = await requireCrew(slug);
+    const c = await requireCrew(slug, { write: true });
     if (c.role !== 'lead') throw new HttpError(403, 'Only the show caller can announce to all hands');
     const control = await ensureTeamChannel(c.ev.id, c.ev.title, 'control');
     await post(control, BS_TYPES.announce, { text: p.data.text, by: c.name, crew: true }, `📣 ${p.data.text}`);
