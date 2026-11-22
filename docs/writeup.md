@@ -1,12 +1,12 @@
 # Backstage: project write-up
 
-**Nexconn Build Challenge 2026 · Team: Raahe**
-**Live app:** _[add Vercel URL]_ · **Source:** _[add GitHub URL]_ · **Demo video:** _[add link]_
-**Nexconn App Key:** _[add App Key]_
+**Nexconn Build Challenge 2026 · Team: Fire Exir**
+**Live app:** _https://backstage-two-weld.vercel.app/_ · **Source:** _https://github.com/CarolDsillva/backstage_ · **Demo video:** _https://youtu.be/iqPTfotv9OU_
+**Nexconn App Key:** _ik1qhw09iruep_
 
 ## Why we built it
 
-We run gigs under the name Raahe. On a gig night, conversation is scattered across tools. Before the show, people who come alone have no way to find each other, and rides are arranged in five different WhatsApp groups. During the show, a lost phone or a dry bar gets shouted at whichever volunteer is nearest, the crew discusses it in yet another group, and the audience never hears the answer. After the encore, the audience scatters, and the artist loses them to the algorithm.
+We run gigs under the name(company) Raahe. On a gig night, conversation is scattered across tools. Before the show, people who come alone have no way to find each other, and rides are arranged in five different WhatsApp groups. During the show, a lost phone or a dry bar gets shouted at whichever volunteer is nearest, the crew discusses it in yet another group, and the audience never hears the answer. After the encore, the audience scatters, and the artist loses them to the algorithm.
 
 Backstage gives every gig one room for its whole life, and connects that room to the crew.
 
