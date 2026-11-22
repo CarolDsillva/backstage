@@ -1,6 +1,6 @@
 import type { Role } from '@/lib/shared/types';
 
-export type ContextType = 'gig' | 'crew' | 'incident';
+export type ContextType = 'gig' | 'crew' | 'incident' | 'team';
 
 export function roleForCode(
   ev: { crewCode: string; leadCode: string; artistCode: string },

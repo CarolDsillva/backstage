@@ -1,6 +1,6 @@
 import { SYSTEM_USER_ID } from './types';
 
-const USER_TYPES = new Set(['RC:TxtMsg', 'RC:ImgMsg']);
+const USER_TYPES = new Set(['RC:TxtMsg', 'RC:ImgMsg', 'RC:HQVCMsg']);
 
 /**
  * Backstage cards (BS:*) are only ever posted by the server. Anything with a BS:

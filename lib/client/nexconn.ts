@@ -23,6 +23,31 @@ export type ChatMsg = {
 };
 
 let sdkPromise: Promise<Sdk> | null = null;
+
+/** Optional extra SDKs for the crew app: Call SDK (walkie radio) and the ready-made Chat UI kit (inbox). */
+export type SetupOpts = { call?: boolean; chatUI?: boolean };
+type CallSdk = typeof import('@nexconn/call');
+let callSdk: CallSdk | null = null;
+let chatUIApp: import('@nexconn/chatui').NCChatUIApplication | null = null;
+
+/** Names the Chat UI kit shows for users/groups; filled from the crew bootstrap. */
+const profiles = {
+  users: new Map<string, string>(),
+  groups: new Map<string, { name: string; members: string[] }>(),
+};
+export function setChatProfiles(users: { userId: string; name: string }[], groups: { channelId: string; name: string; members: string[] }[]) {
+  users.forEach((u) => profiles.users.set(u.userId, u.name));
+  groups.forEach((g) => profiles.groups.set(g.channelId, { name: g.name, members: g.members }));
+  if (!chatUIApp) return;
+  users.forEach((u) => chatUIApp?.updateUserProfile({ userId: u.userId, name: u.name }));
+  groups.forEach((g) => chatUIApp?.updateGroupProfile({ groupId: g.channelId, name: g.name, memberCount: g.members.length }));
+}
+export function getCallSdk() {
+  return callSdk;
+}
+export function getChatUIApp() {
+  return chatUIApp;
+}
 let connectPromise: Promise<string> | null = null;
 let myUserId = '';
 let myName = '';
@@ -82,18 +107,34 @@ let setupPromise: Promise<Sdk> | null = null;
 let reconnecting = false;
 
 /** Initialise the engine, custom types and handlers exactly once. */
-function setup(appKey: string) {
+function setup(appKey: string, opts: SetupOpts = {}) {
   setupPromise ??= (async () => {
     const sdk = await loadSdk();
     const { NCEngine, MessageHandler, ConnectionStatusHandler } = sdk;
+    if (opts.call) {
+      // The Call SDK must install its plugin before NCEngine.initialize().
+      try {
+        callSdk = await import('@nexconn/call');
+        callSdk.NCCallEngine.install();
+      } catch (e) {
+        console.warn('Call SDK unavailable', e);
+        callSdk = null;
+      }
+    }
     NCEngine.initialize({ appKey });
     NCEngine.registerCustomMessages([
-      ...[BS_TYPES.poll, BS_TYPES.song, BS_TYPES.meetup, BS_TYPES.carpool, BS_TYPES.question,
-        BS_TYPES.incident, BS_TYPES.proposal, BS_TYPES.announce].map((messageType) => ({
-        messageType, isPersisted: true, isCounted: true,
-      })),
+      ...PERSISTED_TYPES.map((messageType) => ({ messageType, isPersisted: true, isCounted: true })),
       { messageType: BS_TYPES.state, isPersisted: false, isCounted: false, isStatusMessage: true },
     ]);
+    if (callSdk) {
+      try {
+        callSdk.NCCallEngine.initialize({});
+      } catch (e) {
+        console.warn('Call engine init failed', e);
+        callSdk = null;
+      }
+    }
+    if (opts.chatUI) await setupChatUI();
     NCEngine.addMessageHandler('backstage', new MessageHandler({
       onMessageReceived({ messages }) {
         for (const m of messages) {
@@ -114,6 +155,69 @@ function setup(appKey: string) {
     return sdk;
   })();
   return setupPromise;
+}
+
+const PERSISTED_TYPES = [BS_TYPES.poll, BS_TYPES.song, BS_TYPES.meetup, BS_TYPES.carpool, BS_TYPES.question,
+  BS_TYPES.incident, BS_TYPES.proposal, BS_TYPES.announce, BS_TYPES.issue, BS_TYPES.issueUpdate, BS_TYPES.radio];
+
+/** One-line text for a Backstage card, used by the Chat UI kit's renderer and channel list. */
+export function cardDigest(type: string, c: Record<string, unknown>): string {
+  const s = (v: unknown) => (typeof v === 'string' ? v : '');
+  switch (type) {
+    case BS_TYPES.issue:
+      return `${c.severity === 'critical' ? '🔴 ' : c.severity === 'urgent' ? '🟠 ' : ''}Issue: ${s(c.title)}${c.placeName ? ` · ${s(c.placeName)}` : ''}`;
+    case BS_TYPES.issueUpdate:
+      return `${s(c.by) || 'Someone'} ${c.action === 'take' ? 'is on' : c.action === 'fix' ? 'fixed' : 'reopened'}: ${s(c.title)}`;
+    case BS_TYPES.radio:
+      return c.live ? `📻 Radio live · started by ${s(c.by) || 'crew'}` : '📻 Radio off air';
+    case BS_TYPES.announce:
+      return `📣 ${s(c.text)}`;
+    case BS_TYPES.incident:
+      return `Report: ${s(c.note)}`;
+    default:
+      return `[${type.replace('BS:', '')}]`;
+  }
+}
+
+/** The ready-made Nexconn Chat UI kit (inbox). Must be ready() before connect. */
+async function setupChatUI() {
+  try {
+    const { NCChatUIApplication } = await import('@nexconn/chatui');
+    const app = NCChatUIApplication.initialize({
+      language: 'en_US',
+      hooks: {
+        reqUserProfiles: async (ids) => ids.map((userId) => ({ userId, name: userId === SYSTEM_USER_ID ? 'Backstage' : profiles.users.get(userId) ?? 'Crew' })),
+        reqGroupProfiles: async (ids) => ids.map((groupId) => {
+          const g = profiles.groups.get(groupId);
+          return { groupId, name: g?.name ?? 'Crew channel', memberCount: g?.members.length ?? 0 };
+        }),
+        reqSystemProfiles: async (ids) => ids.map((systemId) => ({ systemId, name: 'Backstage' })),
+        reqGroupMembers: async (groupId) => (profiles.groups.get(groupId)?.members ?? []).map((userId) => ({ userId })),
+      },
+    });
+    if (!app) return;
+    // Render Backstage cards inside the kit as a compact one-line card.
+    class BsCard extends HTMLElement {
+      private _m: { messageType: string; content: Record<string, unknown> } | null = null;
+      set message(m: { messageType: string; content: Record<string, unknown> }) { this._m = m; this.paint(); }
+      get message(): { messageType: string; content: Record<string, unknown> } { return this._m as never; }
+      connectedCallback() { this.paint(); }
+      private paint() {
+        if (!this._m) return;
+        this.textContent = cardDigest(this._m.messageType, this._m.content ?? {});
+        this.setAttribute('style', 'display:block;font:600 14px/1.35 system-ui;padding:2px 0;');
+      }
+    }
+    app.registerCustomMessages(PERSISTED_TYPES.map((messageType) => ({
+      messageType, isPersisted: true, isCounted: true,
+      digest: (m) => cardDigest(m.messageType, (m.content ?? {}) as Record<string, unknown>),
+      component: { tagName: 'bs-card', elementClass: BsCard },
+    })));
+    app.ready();
+    chatUIApp = app;
+  } catch (e) {
+    console.warn('Chat UI unavailable', e);
+  }
 }
 
 /** Connect with a fresh token, retrying with backoff. Never gives up silently. */
@@ -153,11 +257,11 @@ async function reconnectLoop() {
 }
 
 /** Initialise once and connect. Safe to call many times. */
-export function connectNexconn(opts: { appKey: string; userId: string; name: string; token?: string }) {
+export function connectNexconn(opts: { appKey: string; userId: string; name: string; token?: string; setup?: SetupOpts }) {
   myUserId = opts.userId;
   myName = opts.name;
   connectPromise ??= (async () => {
-    await setup(opts.appKey);
+    await setup(opts.appKey, opts.setup);
     try {
       return await connectWithRetry(opts.token);
     } catch (e) {
@@ -224,4 +328,19 @@ export async function loadHistory(channelId: string, pageSize = 50): Promise<Cha
   if (!r.isOk || !r.data) return [];
   // Don't trust page order: sort oldest → newest by send time.
   return r.data.data.map(toChatMsg).sort((a, b) => a.sentAt - b.sentAt);
+}
+
+/** Walkie clip: an HD voice message (Chat SDK). */
+export async function sendVoice(channelId: string, file: File): Promise<ChatMsg> {
+  const { GroupChannel, Helper } = await loadSdk();
+  const prep = await Helper.createSendHDVoiceMessageParams(file);
+  if (!prep.isOk || !prep.data) throw new Error('Could not prepare voice clip');
+  Object.assign(prep.data.content as object, { senderUserInfo: { userId: myUserId, name: myName } });
+  const r = await new GroupChannel(channelId).sendMediaMessage(prep.data);
+  if (!r.isOk || !r.data) throw new Error(`send failed (${r.code})`);
+  return toChatMsg(r.data);
+}
+
+export function myId() {
+  return myUserId;
 }

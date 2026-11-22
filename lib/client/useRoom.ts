@@ -1,13 +1,13 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  connectNexconn, loadHistory, onMessage, onStatus, sendCustom, sendImage, sendText,
+  connectNexconn, loadHistory, onMessage, onStatus, sendCustom, sendImage, sendText, sendVoice,
   type ChatMsg, type ConnStatus,
 } from './nexconn';
 import { BS_TYPES, type StateSignal } from '@/lib/shared/types';
 import { isRenderable } from '@/lib/shared/trust';
 
-export type Me = { userId: string; name: string; appKey: string; token?: string };
+export type Me = { userId: string; name: string; appKey: string; token?: string; setup?: import('./nexconn').SetupOpts };
 
 function bumpActivity(slug?: string) {
   if (!slug) return;
@@ -83,6 +83,12 @@ export function useRoom(channelId: string | null, me: Me | null, slug?: string) 
     bumpActivity(slug);
   }, [channelId, slug]);
 
+  const voice = useCallback(async (f: File) => {
+    if (!channelId) return;
+    append(await sendVoice(channelId, f));
+    bumpActivity(slug);
+  }, [channelId, slug]);
+
   const custom = useCallback(async (type: string, content: Record<string, unknown>) => {
     if (!channelId) return;
     append(await sendCustom(channelId, type, content));
@@ -94,5 +100,5 @@ export function useRoom(channelId: string | null, me: Me | null, slug?: string) 
     return () => void stateCbs.current.delete(cb);
   }, []);
 
-  return { messages, status, loading, sendText: text, sendImage: image, sendCustom: custom, onState };
+  return { messages, status, loading, sendText: text, sendImage: image, sendVoice: voice, sendCustom: custom, onState };
 }

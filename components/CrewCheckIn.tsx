@@ -7,7 +7,7 @@ import type { EventRow, Role } from '@/lib/shared/types';
 type Step = 'code' | 'name' | 'done';
 
 /** Crew front door: a backstage pass, not a fan poster. Code first, then name. */
-export function CrewCheckIn({ slug, knownName, onDone }: { slug: string; knownName?: string; onDone: (role: Role, token?: string) => void }) {
+export function CrewCheckIn({ slug, knownName, onDone, instant }: { slug: string; knownName?: string; onDone: (role: Role, token?: string) => void; instant?: boolean }) {
   const [step, setStep] = useState<Step>('code');
   const [code, setCode] = useState('');
   const [name, setName] = useState(knownName ?? '');
@@ -37,6 +37,7 @@ export function CrewCheckIn({ slug, knownName, onDone }: { slug: string; knownNa
     setBusy(true);
     try {
       const r = await postJson<{ role: Role; token: string }>('/api/join', { slug, name: n, code: code.trim(), as: 'crew' });
+      if (instant) return onDone(r.role, r.token); // the crew app shows its own team picker + demo next
       setResult({ role: r.role, token: r.token });
       setStep('done');
     } catch (err) {

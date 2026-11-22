@@ -44,6 +44,12 @@ export type Incident = {
   reporterName: string;
   channelId: string;
   createdAt: string;
+  /** Crew issues only. */
+  team?: string | null;
+  severity?: string;
+  title?: string | null;
+  assigneeId?: string | null;
+  assigneeName?: string | null;
 };
 
 export type ProposalState = 'pending' | 'approved' | 'rejected';
@@ -70,6 +76,15 @@ export type EventRow = {
   startsAt: string;
   endsAt: string;
   phaseOverride: Phase | null;
+  /** Quick references for the crew HQ (set times, contacts, notes). */
+  refs?: EventRefs;
+};
+
+export type EventRefs = {
+  doors?: string;
+  sets?: { time: string; name: string }[];
+  contacts?: { role: string; name: string; channel?: string }[];
+  notes?: string[];
 };
 
 /** Custom Nexconn message types. Registered on the client before connect. */
@@ -83,6 +98,12 @@ export const BS_TYPES = {
   proposal: 'BS:Proposal',
   announce: 'BS:Announce',
   state: 'BS:State',
+  /** Crew: an issue raised in a team room (also shown on the HQ map/feed). */
+  issue: 'BS:Issue',
+  /** Crew: someone took an issue or fixed it. */
+  issueUpdate: 'BS:IssueUpd',
+  /** Crew: a team's radio (Nexconn group audio call) went live or off air. */
+  radio: 'BS:Radio',
 } as const;
 
 export const CARD_MESSAGE_TYPE: Record<CardType, string> = {
@@ -93,7 +114,7 @@ export const CARD_MESSAGE_TYPE: Record<CardType, string> = {
   question: BS_TYPES.question,
 };
 
-export type StateSignal = { kind: 'event' | 'card' | 'conditions' | 'incident' | 'proposal'; id?: string };
+export type StateSignal = { kind: 'event' | 'card' | 'conditions' | 'incident' | 'proposal' | 'crew'; id?: string };
 
 /** Server-side sender id for system messages posted into rooms. */
 export const SYSTEM_USER_ID = 'backstagebot';

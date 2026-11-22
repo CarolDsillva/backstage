@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { badgeFor, useEventState } from '@/lib/client/useEventState';
 import { useRoom } from '@/lib/client/useRoom';
 import { reconnectNow } from '@/lib/client/nexconn';
@@ -106,7 +105,7 @@ export function GigApp({ slug }: { slug: string }) {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {staff && (
-            <Link href={`/e/${slug}/crew`} className="rounded-full bg-spot px-3 py-1.5 text-xs font-bold text-ink">Crew console</Link>
+            <a href={`/e/${slug}/crew`} className="rounded-full bg-spot px-3 py-1.5 text-xs font-bold text-ink">Crew console</a>
           )}
           {who.role === 'lead' && <LeadControls slug={slug} phase={phase} onChanged={refetch} />}
           <ConnDot status={room.status} />

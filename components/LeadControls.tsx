@@ -51,9 +51,9 @@ export function LeadControls({ slug, phase, onChanged }: { slug: string; phase: 
           <Link href={`/e/${slug}/screen`} target="_blank" className="rounded-xl px-3 py-2 text-sm text-mist hover:bg-velvet-2">
             Open the stage screen
           </Link>
-          <Link href={`/e/${slug}/crew`} className="rounded-xl px-3 py-2 text-sm text-mist hover:bg-velvet-2">
+          <a href={`/e/${slug}/crew`} className="rounded-xl px-3 py-2 text-sm text-mist hover:bg-velvet-2">
             Open the crew console
-          </Link>
+          </a>
           <Link href={`/e/${slug}/stats`} className="rounded-xl px-3 py-2 text-sm text-mist hover:bg-velvet-2">
             See tonight’s numbers
           </Link>

@@ -1,6 +1,6 @@
-import { CrewConsole } from './CrewConsole';
+import { CrewApp } from '@/components/crew/CrewApp';
 
 export default async function CrewPage({ params }: PageProps<'/e/[slug]/crew'>) {
   const { slug } = await params;
-  return <CrewConsole slug={slug} />;
+  return <CrewApp slug={slug} />;
 }

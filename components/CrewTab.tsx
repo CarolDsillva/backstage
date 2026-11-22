@@ -1,6 +1,5 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import type { EventState } from '@/lib/client/useEventState';
 import { useRoom, type Me } from '@/lib/client/useRoom';
 import { IncidentRoom } from './IncidentRoom';
@@ -105,7 +104,7 @@ function StaffView({ state, slug, me }: { state: EventState; slug: string; me: M
     <div className="flex-1 overflow-y-auto px-4 py-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm text-haze">Reports tonight</h2>
-        <Link href={`/e/${slug}/crew`} className="text-sm text-spot underline underline-offset-4">Open the full console</Link>
+        <a href={`/e/${slug}/crew`} className="text-sm text-spot underline underline-offset-4">Open the full console</a>
       </div>
       {error && <p role="alert" className="mt-2 text-sm text-gel">{error}</p>}
       {incidents === null ? (

@@ -157,3 +157,5 @@ alter table card_votes enable row level security;
 alter table fan_optins enable row level security;
 alter table feedback enable row level security;
 alter table activity enable row level security;
+
+-- Crew comms (22 Nov 2026): see supabase/2026-11-22-crew-comms.sql (run it after this file).

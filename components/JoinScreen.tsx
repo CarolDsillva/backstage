@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { postJson } from '@/lib/client/useEventState';
 import { Poster } from './ui/Poster';
 import { AvatarStack } from './ui/Avatar';
@@ -80,9 +79,9 @@ export function JoinScreen({ slug, onJoined }: { slug: string; onJoined: (token?
         <button onClick={() => setSheet(true)} className="mt-auto h-14 rounded-full bg-spot text-lg font-bold text-ink shadow-[0_10px_30px_-10px_rgb(198_243_107/.6)]">
           Join the room
         </button>
-        <Link href={`/e/${slug}/crew`} className="mt-4 text-center text-sm text-haze underline-offset-4 hover:underline">
+        <a href={`/e/${slug}/crew`} className="mt-4 text-center text-sm text-haze underline-offset-4 hover:underline">
           Working tonight? Crew check-in
-        </Link>
+        </a>
       </section>
 
       {sheet && (

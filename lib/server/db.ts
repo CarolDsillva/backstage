@@ -29,12 +29,13 @@ type EventDb = {
   id: string; slug: string; title: string; artist: string; venue: string;
   starts_at: string; ends_at: string; phase_override: Phase | null;
   crew_code: string; lead_code: string; artist_code: string;
+  refs?: import('@/lib/shared/types').EventRefs | null;
 };
 
 export function mapEvent(r: EventDb): EventSecrets {
   return {
     id: r.id, slug: r.slug, title: r.title, artist: r.artist, venue: r.venue,
-    startsAt: r.starts_at, endsAt: r.ends_at, phaseOverride: r.phase_override,
+    startsAt: r.starts_at, endsAt: r.ends_at, phaseOverride: r.phase_override, refs: r.refs ?? {},
     crewCode: r.crew_code, leadCode: r.lead_code, artistCode: r.artist_code,
   };
 }
