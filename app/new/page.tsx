@@ -23,6 +23,7 @@ export default function NewEvent() {
   const [time, setTime] = useState(today.time);
   const [hours, setHours] = useState(4);
   const [name, setName] = useState('');
+  const [artist, setArtist] = useState('');
   const [teams, setTeams] = useState<TeamId[]>(DEFAULT_TEAMS);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -35,7 +36,7 @@ export default function NewEvent() {
     setBusy(true); setErr('');
     try {
       const startsAt = new Date(`${date}T${time}`).toISOString();
-      const r = await crewPost<{ slug: string; codes: { crew: string; viewer: string } }>('/api/events', { title, venue, city, startsAt, hours, name, teams });
+      const r = await crewPost<{ slug: string; codes: { crew: string; viewer: string } }>('/api/events', { title, venue, city, startsAt, hours, name, teams, artist });
       try {
         const mine = JSON.parse(localStorage.getItem('bs_my_events') ?? '[]') as unknown[];
         localStorage.setItem('bs_my_events', JSON.stringify([{ slug: r.slug, title, venue: city ? `${venue}, ${city}` : venue, startsAt }, ...mine].slice(0, 12)));
@@ -69,6 +70,9 @@ export default function NewEvent() {
 
             <label htmlFor="ev-title" className={label}>Event name</label>
             <input id="ev-title" value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={48} placeholder="e.g. Friday Open Mic" className={field} />
+
+            <label htmlFor="ev-artist" className={label}>Headliner <span className="font-normal text-[#8C7FC0]">(optional)</span></label>
+            <input id="ev-artist" value={artist} onChange={(e) => setArtist(e.target.value)} maxLength={48} placeholder="e.g. Raahe" className={field} />
 
             <div className="grid grid-cols-[1.4fr_1fr] gap-3">
               <div>

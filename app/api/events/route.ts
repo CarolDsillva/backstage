@@ -4,7 +4,8 @@ import venue from '@/seed/venue.json';
 import { currentUserId, setSessionCookie } from '@/lib/server/auth';
 import { check, db, getUser, upsertUser } from '@/lib/server/db';
 import { joinTeamChannels } from '@/lib/server/crew';
-import { issueToken } from '@/lib/server/nexconn';
+import { issueToken, joinGroup } from '@/lib/server/nexconn';
+import { ensureChannel } from '@/lib/server/rooms';
 import { errorResponse, HttpError } from '@/lib/server/http';
 import { TEAM_IDS, type TeamId } from '@/lib/shared/teams';
 
@@ -17,6 +18,8 @@ const input = z.object({
   startsAt: z.string().datetime({ offset: true, message: 'Pick a date and time' }),
   hours: z.number().min(1).max(24).default(4),
   name: z.string().trim().min(1, 'Add your name').max(32),
+  /** Who's performing. Optional: falls back to the event name (never the organiser's name). */
+  artist: z.string().trim().max(48).default(''),
   teams: z.array(z.enum(TEAM_IDS as [TeamId, ...TeamId[]])).min(1, 'Pick at least one team').max(9),
 });
 
@@ -40,7 +43,7 @@ export async function POST(req: Request) {
     const codes = { crew: `crew-${word()}`, lead: `lead-${word()}`, artist: `artist-${word()}`, viewer: `watch-${word()}` };
 
     check(await db().from('events').insert({
-      id, slug, title: d.title, artist: d.name, venue: d.city ? `${d.venue}, ${d.city}` : d.venue,
+      id, slug, title: d.title, artist: d.artist || d.title, venue: d.city ? `${d.venue}, ${d.city}` : d.venue,
       starts_at: start.toISOString(), ends_at: end.toISOString(),
       crew_code: codes.crew, lead_code: codes.lead, artist_code: codes.artist,
       refs: { teams, viewerCode: codes.viewer, tagline: d.city || 'Your event', createdBy: d.name },
@@ -53,7 +56,12 @@ export async function POST(req: Request) {
     const userId = known?.id ?? 'u' + crypto.randomUUID().replace(/-/g, '').slice(0, 20);
     await upsertUser(userId, d.name);
     check(await db().from('memberships').upsert({ event_id: id, user_id: userId, role: 'lead', team: 'control' }));
-    const [token] = await Promise.all([issueToken(userId, d.name), joinTeamChannels(id, d.title, userId, 'lead', 'control', teams)]);
+    const [token] = await Promise.all([
+      issueToken(userId, d.name),
+      joinTeamChannels(id, d.title, userId, 'lead', 'control', teams),
+      // The audience room too, so the organiser can talk to their audience from minute one.
+      ensureChannel('gig', id, d.title, userId).then((gig) => joinGroup(gig, [userId])),
+    ]);
     await setSessionCookie(userId);
     return Response.json({ slug, token, codes: { crew: codes.crew, viewer: codes.viewer } });
   } catch (e) {
