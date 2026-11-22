@@ -32,8 +32,8 @@ export function ensureTeamChannel(eventId: string, title: string, teamId: TeamId
 }
 
 /** Create (if needed) and join every channel this member may open. Returns team → channelId. */
-export async function joinTeamChannels(eventId: string, title: string, userId: string, role: Role, myTeam: string | null) {
-  const ids = channelsFor(role, myTeam);
+export async function joinTeamChannels(eventId: string, title: string, userId: string, role: Role, myTeam: string | null, eventTeams?: readonly string[] | null) {
+  const ids = channelsFor(role, myTeam, eventTeams);
   const pairs = await Promise.all(ids.map(async (t) => [t, await ensureTeamChannel(eventId, title, t)] as const));
   await Promise.all(pairs.map(([, ch]) => nx.joinGroup(ch, [userId])));
   return Object.fromEntries(pairs) as Partial<Record<TeamId, string>>;

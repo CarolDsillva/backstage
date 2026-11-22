@@ -5,8 +5,8 @@ import { TEAMS, type TeamId } from '@/lib/shared/teams';
 import { cx } from './bits';
 
 /** After crew check-in: pick your team. This decides which radio channel you're on. */
-export function TeamPicker({ slug, name, isLead, current, onDone, onCancel }: {
-  slug: string; name: string; isLead: boolean; current?: TeamId | null; onDone: () => void; onCancel?: () => void;
+export function TeamPicker({ slug, name, isLead, current, teams, onDone, onCancel }: {
+  slug: string; name: string; isLead: boolean; current?: TeamId | null; teams?: string[]; onDone: () => void; onCancel?: () => void;
 }) {
   const [pick, setPick] = useState<TeamId | null>(current ?? (isLead ? 'control' : null));
   const [busy, setBusy] = useState(false);
@@ -20,9 +20,9 @@ export function TeamPicker({ slug, name, isLead, current, onDone, onCancel }: {
     <main className="cosmos mx-auto flex min-h-dvh w-full max-w-[480px] flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))]">
       <p className="lcd text-xs font-bold text-[#FF9CCB]">BACKSTAGE · CREW</p>
       <h1 className="mt-3 font-display text-[34px] leading-[1] font-extrabold tracking-tight">Hey {name.split(' ')[0]}.<br />Which team are you on?</h1>
-      <p className="mt-2 text-sm text-white/60">{isLead ? 'As show caller you hear every channel. Pick your home channel.' : 'You’ll hear Control (all hands) plus your team’s channel.'}</p>
+      <p className="mt-2 text-sm text-white/60">{isLead ? 'As event manager you hear every channel. Pick your home channel.' : 'You’ll hear Control (all hands) plus your team’s channel.'}</p>
       <div className="mt-5 grid flex-1 grid-cols-2 content-start gap-2.5" role="radiogroup" aria-label="Team">
-        {TEAMS.map((t, i) => (
+        {TEAMS.filter((t) => t.id === 'control' || !teams?.length || teams.includes(t.id)).map((t, i) => (
           <button key={t.id} role="radio" aria-checked={pick === t.id} onClick={() => setPick(t.id)}
             className={cx('fan-in relative overflow-hidden rounded-3xl p-4 text-left transition-transform active:scale-[.98]', pick === t.id ? 'ring-2' : 'bg-white/[0.06]')}
             style={{ animationDelay: `${i * 40}ms`, ...(pick === t.id ? { background: `${t.color}26`, boxShadow: `inset 0 0 0 2px ${t.color}` } : {}) }}>

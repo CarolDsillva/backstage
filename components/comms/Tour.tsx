@@ -37,6 +37,14 @@ export function Tour({ steps, onStep, onDone }: { steps: TourStep[]; onStep?: (i
     }, 250);
   };
 
+  // Freeze page scrolling while the tour is up, so the spotlight never drifts with the wheel.
+  useEffect(() => {
+    const html = document.documentElement;
+    const prev = html.style.overflow;
+    html.style.overflow = 'hidden';
+    return () => { html.style.overflow = prev; };
+  }, []);
+
   // Follow the target as layouts change (tabs switch, lists load, keyboard opens).
   useEffect(() => {
     if (!step.target) { setRect(null); return; }
@@ -48,7 +56,7 @@ export function Tour({ steps, onStep, onDone }: { steps: TourStep[]; onStep?: (i
       raf = requestAnimationFrame(tick);
     };
     const el = document.querySelector(`[data-tour="${step.target}"]`) as HTMLElement | null;
-    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el?.scrollIntoView({ block: 'center', behavior: 'instant' });
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [step.target, i]);
@@ -119,25 +127,26 @@ const stepBtn = (secondary: boolean) =>
   secondary ? 'h-10 rounded-full bg-[#33236B] px-4 text-sm font-bold text-white' : 'h-12 w-full rounded-full bg-[#7C4DFF] font-display text-base font-extrabold text-white';
 
 export const DEMO_TOUR: TourStep[] = [
-  { title: 'Welcome to Demo Fest 🎪', body: 'You’re the show caller tonight. Ten crew members are already on the radio. Let’s run the show together: six real actions, about a minute.', cta: 'Let’s go' },
-  { target: 'take', wait: 'click', title: 'A critical issue just landed', body: 'Security says Barrier B is bowing. Tap “I’m on it” so every team knows you’ve got it.' },
+  { title: 'Welcome to Sundown Sessions 🎶', body: 'This is an interactive demo. You’re the event manager, and ten crew members are already on the radio. Let’s run the night together: a few real actions, about two minutes.', cta: 'Let’s go' },
+  { target: 'take', wait: 'click', title: 'A critical issue just landed', body: 'Security says Barrier B is bowing. Tap “I’m on it” so every team knows you own it.' },
   { target: 'tab-chats', wait: 'click', title: 'Every team has a chat', body: 'Nine channels, one per team. Open Chats.' },
   { target: 'chat-security', wait: 'click', title: 'Open Security', body: 'The red dot means a critical issue is open on this channel.' },
   { target: 'composer', wait: 'signal:sent', title: 'Tell them help is coming', body: 'Type something like “Sending 2 runners to Barrier B” and send it. Watch Security reply.' },
+  { target: 'call', wait: 'click', title: 'Need everyone to hear you?', body: 'The green phone calls the whole team. Their phones ring and play your voice out loud.' },
+  { target: 'call-hold', wait: 'signal:called', skip: 'No mic? Skip', title: 'Hold and speak', body: 'Say “Two runners on the way to Barrier B”, then let go. Vikram will call you back.' },
   { target: 'to-walkie', wait: 'click', title: 'Hands full? Use the walkie', body: 'Crew can’t always type. Open the walkie for this channel.' },
   { target: 'ptt', wait: 'signal:voice', skip: 'No mic? Skip', title: 'Push to talk', body: 'Hold the pink button, say “Barrier B, two runners on the way”, then let go. It goes out on CH05.' },
-  { target: 'tab-map', wait: 'click', title: 'See the whole venue', body: 'Open the live map.' },
-  { target: 'map', title: 'Problems, where they are', body: 'Every open issue is pinned on the venue. Red is critical. Tap a spot to see it or raise a new one there.' },
-  { target: 'tab-alerts', wait: 'click', title: 'Close the loop', body: 'Back to Alerts.' },
-  { target: 'fix', wait: 'click', title: 'Barrier’s holding', body: 'Tap Fixed. Everyone sees it clear, and Security gets the update in their chat.' },
-  { title: 'That’s Backstage', body: 'Alerts for what needs you. A chat for every team. A walkie for when you can’t type. A map of the whole night. The demo crew keep working while you look around.', cta: 'Explore on my own' },
+  { target: 'tab-map', wait: 'click', title: 'See the whole venue', body: 'Open the live map: every open issue is pinned where it is, and red is critical.' },
+  { target: 'tab-tasks', wait: 'click', title: 'Who’s on what', body: 'Open Tasks: every open job, who has it, and what still needs someone.' },
+  { target: 'fix', wait: 'click', title: 'Barrier’s holding', body: 'That one is yours. Tap Done. Everyone sees it cleared, and Security gets the update in their chat.' },
+  { title: 'That’s Backstage', body: 'Alerts for what needs you. A chat for every team. Tasks so nothing is dropped. A walkie for when you can’t type. The demo crew keep working while you look around.', cta: 'Explore on my own' },
 ];
 
 export const VIEWER_TOUR: TourStep[] = [
   { title: 'You’re watching Mic Drop 👀', body: 'Raahe’s open mic at a Bangalore café, from the crew’s side: Smera, RJ, Shashi, Vaibhav, Niharika and Divyansh. You can read everything; only crew can post.', cta: 'Show me around' },
   { target: 'stats', title: 'What needs attention', body: 'Open issues first, critical ones on top, then everything happening across the event.' },
   { target: 'tab-chats', wait: 'click', title: 'Every team’s chat', body: 'Open Chats to see all nine channels.' },
-  { target: 'chat-control', wait: 'click', title: 'Control: the show caller', body: 'Open Control. It’s where the show is called and every critical issue is echoed.' },
+  { target: 'chat-control', wait: 'click', title: 'Control: the event manager', body: 'Open Control. It’s where the event is run and every critical issue is echoed.' },
   { target: 'to-walkie', wait: 'click', title: 'The walkie', body: 'Each team channel is also a walkie channel. Open it.' },
   { target: 'tab-map', wait: 'click', title: 'The venue', body: 'Open the map to see where issues happened.' },
   { title: 'Look around', body: 'Scroll any chat to replay the night: 22 sign-ups for 14 slots, the coffee machine tripping the power, and the crowd spilling onto the footpath.', cta: 'Got it' },

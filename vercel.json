@@ -1,4 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["syd1"]
+  "regions": ["syd1"],
+  "headers": [
+    {
+      "source": "/clips/(.*)\\.wav",
+      "headers": [{ "key": "Content-Type", "value": "audio/mpeg" }]
+    }
+  ]
 }

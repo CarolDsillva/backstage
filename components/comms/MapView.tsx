@@ -26,7 +26,7 @@ export function MapView({ state, now, viewer, onOpenChat, onRaise }: {
   const list = sel ? byPlace.get(sel) ?? [] : open.filter((i) => i.placeId);
 
   return (
-    <div className="px-4 pt-2 pb-32">
+    <div className="px-5 pb-36">
       <div data-tour="map" className="relative overflow-hidden rounded-[28px] bg-[#251856] p-3">
         <div className="relative mx-auto aspect-[100/140] max-h-[58dvh]">
           {/* eslint-disable-next-line @next/next/no-img-element */}

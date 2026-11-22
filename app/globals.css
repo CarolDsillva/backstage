@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  /* Night-club purple-black, one lime accent (ref: lime-on-purple event UI). */
-  --color-night: #110e1a;
-  --color-velvet: #1c1829;
-  --color-velvet-2: #272138;
-  --color-line: #342d4a;
-  --color-haze: #a49db9;
+  /* Purple cosmos with lavender actions and Raahe pink for live and alerts. */
+  --color-night: #160B36;
+  --color-velvet: #221452;
+  --color-velvet-2: #2B1D5E;
+  --color-line: #3B2A78;
+  --color-haze: #B8ABE6;
   --color-mist: #f4f2fa;
-  --color-spot: #c6f36b;      /* lime: primary action */
-  --color-gel: #ff5fa2;       /* hot pink: live, alerts */
+  --color-spot: #B9A2FF;      /* lavender: primary action */
+  --color-gel: #EC4F9B;       /* hot pink: live, alerts */
   --color-warn: #ffc35a;      /* amber: limited / crew updates */
   --color-ok: #5fe3b0;
   --color-paper: #f6eedb;

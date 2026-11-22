@@ -17,6 +17,7 @@ export type CrewState = {
   crew: { userId: string; name: string; role: Role; team: string | null }[];
   radio: { team: string; callId: string; startedBy: string; startedAt: string }[];
   serverTime: string;
+  invite?: { crew: string; viewer: string | null } | null;
 };
 
 type Status = 'loading' | 'checkin' | 'ready' | 'notfound' | 'error';
@@ -41,6 +42,8 @@ export function useCrew(slug: string) {
       if (r.status === 404) return setStatus('notfound');
       if (!r.ok) return setStatus((s) => (s === 'ready' ? s : 'error'));
       const data = (await r.json()) as CrewState;
+      // Other demo visitors are not crew: keep them out of member lists (they'd all show as guests).
+      data.crew = data.crew.filter((c) => c.userId === data.me.userId || !/^(You|Guest) · /.test(c.name));
       setState(data);
       setStatus('ready');
     } catch {

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ArrowLeft, Eye, ImagePlus, Inbox as InboxIcon, Mic, Plus, Radio, Send, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Eye, ImagePlus, Inbox as InboxIcon, Mic, Phone, Plus, Radio, Send, X } from 'lucide-react';
 import { useRoom } from '@/lib/client/useRoom';
 import { useRecorder } from '@/lib/client/recorder';
 import type { CrewState, FeedItem } from '@/lib/client/useCrew';
@@ -24,7 +24,7 @@ export function ChatList({ state, feed, unread, now, onOpen, onInbox }: {
   const rows = TEAMS.filter((t) => state.canOpen.includes(t.id))
     .sort((a, b) => (last.get(b.id)?.sentAt ?? 0) - (last.get(a.id)?.sentAt ?? 0));
   return (
-    <div className="px-4 pt-2 pb-32">
+    <div className="px-5 pb-36">
       <ul className="overflow-hidden rounded-[28px] bg-[#251856]">
         {rows.map((t) => {
           const l = last.get(t.id);
@@ -33,7 +33,7 @@ export function ChatList({ state, feed, unread, now, onOpen, onInbox }: {
           const members = state.crew.filter((c) => t.id === 'control' || c.team === t.id).length;
           return (
             <li key={t.id} className="border-b border-[#33236B] last:border-0">
-              <button data-tour={`chat-${t.id}`} onClick={() => onOpen(t.id)} className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-[#2C1D63]">
+              <button data-tour={`chat-${t.id}`} onClick={() => onOpen(t.id)} className="flex w-full items-center gap-3.5 px-4 py-4 text-left active:bg-[#2C1D63]">
                 <span className="relative">
                   <TeamBadge team={t.id} size={52} />
                   {hot && <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-[#FF6B5B] ring-[3px] ring-[#160B36]" aria-label="Critical issue open" />}
@@ -64,9 +64,9 @@ export function ChatList({ state, feed, unread, now, onOpen, onInbox }: {
 }
 
 /** One team's conversation. Photo, voice clip (hold the mic), text, and raise-an-issue from the + menu. */
-export function ChatView({ state, teamId, slug, viewer, onBack, onRaise, onWalkie, onSent }: {
+export function ChatView({ state, teamId, slug, viewer, onBack, onRaise, onWalkie, onCall, onSent }: {
   state: CrewState; teamId: TeamId; slug: string; viewer: boolean;
-  onBack: () => void; onRaise: () => void; onWalkie: () => void; onSent?: (kind: 'text' | 'voice' | 'image') => void;
+  onBack: () => void; onRaise: () => void; onWalkie: () => void; onCall: () => void; onSent?: (kind: 'text' | 'voice' | 'image') => void;
 }) {
   const t = teamOf(teamId);
   const u = tui(teamId);
@@ -106,24 +106,30 @@ export function ChatView({ state, teamId, slug, viewer, onBack, onRaise, onWalki
 
   return (
     <div className="fixed inset-0 z-40 mx-auto flex max-w-[480px] flex-col bg-[#160B36] text-white">
-      <header className="flex items-center gap-3 bg-[#160B36]/80 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 backdrop-blur">
+      <header className="flex items-center gap-3 bg-[#160B36]/80 px-4 pt-[max(0.9rem,env(safe-area-inset-top))] pb-3 backdrop-blur">
         <button onClick={onBack} className="grid h-11 w-11 place-items-center rounded-full bg-[#251856]" aria-label="Back to chats"><ArrowLeft size={20} /></button>
         <TeamBadge team={teamId} size={42} />
         <div className="min-w-0 flex-1">
           <h1 className="truncate font-display text-[19px] leading-tight font-extrabold">{t.name}</h1>
           <p className="truncate text-xs text-[#B8ABE6]">{members.length} people{openIssues ? ` · ${openIssues} open issue${openIssues > 1 ? 's' : ''}` : ''}</p>
         </div>
-        <button data-tour="to-walkie" onClick={onWalkie} className="flex h-11 items-center gap-1.5 rounded-full bg-[#7C4DFF] px-4 text-sm font-bold text-white" aria-label={`Open the walkie on ${t.name}`}>
-          <Radio size={16} />Walkie
+        {!viewer && (
+          <button data-tour="call" onClick={onCall} disabled={members.length < 2} title={members.length < 2 ? 'Nobody else is on this channel yet' : undefined}
+            className="grid h-11 w-11 place-items-center rounded-full bg-[#2FB392] text-white disabled:opacity-40" aria-label={`Voice call everyone on ${t.name}`}>
+            <Phone size={18} />
+          </button>
+        )}
+        <button data-tour="to-walkie" onClick={onWalkie} className="grid h-11 w-11 place-items-center rounded-full bg-[#7C4DFF] text-white" aria-label={`Open the walkie on ${t.name}`}>
+          <Radio size={18} />
         </button>
       </header>
       <div className="flex gap-1.5 overflow-x-auto px-4 pb-2">
         {members.slice(0, 8).map((m) => (
-          <span key={m.userId} className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#251856] py-1 pr-3 pl-1 text-xs font-semibold"><Face name={m.name} size={22} />{firstName(m.name)}</span>
+          <span key={m.userId} className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#251856] py-1 pr-3 pl-1 text-xs font-semibold"><Face name={m.name} size={22} />{m.userId === state.me.userId ? 'You' : firstName(m.name)}</span>
         ))}
       </div>
 
-      <div ref={listRef} className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-3 py-3" aria-live="polite">
+      <div ref={listRef} className="min-h-0 flex-1 space-y-3.5 overflow-y-auto px-4 py-4" aria-live="polite">
         {room.loading && room.messages.length === 0 && <p className="pt-10 text-center text-sm text-[#8C7FC0]">Loading messages…</p>}
         {!room.loading && room.messages.length === 0 && (
           <p className="mx-auto mt-8 max-w-xs rounded-[22px] bg-[#251856] p-5 text-center text-sm text-[#B8ABE6]">Nothing on {t.name} yet. Say hi, or hold the mic to send a walkie clip.</p>
@@ -137,7 +143,7 @@ export function ChatView({ state, teamId, slug, viewer, onBack, onRaise, onWalki
           <Eye size={16} className="text-[#FF9CCB]" />You’re watching as a guest. Crew members can post here.
         </div>
       ) : (
-        <div className="px-3 pt-2 pb-[max(0.8rem,env(safe-area-inset-bottom))]">
+        <div className="border-t border-white/[0.06] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {(err || rec.error) && <p role="alert" className="mb-2 text-center text-xs font-semibold text-[#FF9A8F]">{err || rec.error}</p>}
           {menu && (
             <div className="slide-up mb-2 grid grid-cols-2 gap-2">

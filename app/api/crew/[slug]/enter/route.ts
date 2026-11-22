@@ -39,12 +39,12 @@ export async function POST(req: Request, ctx: RouteContext<'/api/crew/[slug]/ent
     if (persona) {
       if (!ev.refs?.demo) throw new HttpError(400, 'This event needs a code.');
       const pr = PERSONAS[persona as PersonaId];
-      role = pr.role; team = pr.team; name ||= `You · ${pr.label}`;
+      role = pr.role; team = pr.team; name ||= `Guest · ${pr.label}`;
     } else if (code && ev.refs?.viewerCode && code.toLowerCase() === ev.refs.viewerCode.toLowerCase()) {
       role = 'attendee'; team = VIEWER_TEAM; name ||= 'Viewer';
     } else {
       role = roleForCode(ev, code);
-      if (role === 'attendee') throw new HttpError(400, 'That code isn’t right. Check it with the show caller.');
+      if (role === 'attendee') throw new HttpError(400, 'That code isn’t right. Check it with your event manager.');
       if (!name) throw new HttpError(400, 'Add your name so the crew knows who’s talking.');
       team = role === 'lead' ? 'control' : role === 'artist' ? 'artist' : null;
     }
@@ -69,7 +69,7 @@ export async function POST(req: Request, ctx: RouteContext<'/api/crew/[slug]/ent
       (async () => {
         check(await db().from('memberships').upsert({ event_id: ev.id, user_id: userId, role, team }));
         // Viewers hear every channel (read-only in the app); crew join Control + their team.
-        if (team) await joinTeamChannels(ev.id, ev.title, userId, team === VIEWER_TEAM ? 'lead' : role, team === VIEWER_TEAM ? null : team);
+        if (team) await joinTeamChannels(ev.id, ev.title, userId, team === VIEWER_TEAM ? 'lead' : role, team === VIEWER_TEAM ? null : team, ev.refs?.teams);
       })(),
       persona ? kickoff(ev).catch((e) => console.error('demo kickoff', e)) : null,
     ]);

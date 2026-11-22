@@ -1,11 +1,12 @@
 'use client';
 import { useState } from 'react';
-import { Bell, BellRing, CheckCircle2, Hand, MapPin, Megaphone } from 'lucide-react';
+import { Bell, BellRing, CheckCircle2, ChevronDown, Hand, MapPin, Megaphone } from 'lucide-react';
 import { crewPost, type CrewState, type FeedItem } from '@/lib/client/useCrew';
 import { BS_TYPES, type Incident } from '@/lib/shared/types';
 import { team as teamOf, type TeamId } from '@/lib/shared/teams';
 import { preview, firstName } from './Messages';
 import { Face, SEV, TeamBadge, ago, cx, tui } from './ui';
+import { Invite } from './Invite';
 
 /** Home tab: what needs attention right now. Big numbers, then the issues, then everything else. */
 export function Alerts({ state, feed, now, slug, viewer, notif, onEnableNotif, onOpenChat, onChanged, onIssueAction, tourIssueId }: {
@@ -19,13 +20,13 @@ export function Alerts({ state, feed, now, slug, viewer, notif, onEnableNotif, o
   const critical = open.filter((i) => i.severity === 'critical').length;
   const fixed = state.issues.filter((i) => i.status === 'resolved').length;
   const announcements = feed.filter((f) => f.type === BS_TYPES.announce).slice(0, 1);
-  const activity = feed.filter((f) => f.type !== BS_TYPES.state).slice(0, 12);
   const firstCriticalNew = open.find((i) => i.severity === 'critical' && i.status === 'new');
 
   return (
-    <div className="space-y-5 px-4 pt-2 pb-32">
+    <div className="space-y-8 px-5 pb-36">
       {/* Big numbers */}
-      <section data-tour="stats" className="glass-card overflow-hidden rounded-[32px] p-4" aria-label="Right now">
+      {state.invite && state.crew.length < 4 && <Invite compact slug={slug} title={state.event.title} crew={state.invite.crew} viewer={state.invite.viewer} />}
+      <section data-tour="stats" className="glass-card overflow-hidden rounded-[32px] p-5" aria-label="Right now">
         <Orbit state={state} onOpenChat={onOpenChat} />
         <div className="mt-1 flex items-end justify-between px-1">
           <div>
@@ -59,7 +60,7 @@ export function Alerts({ state, feed, now, slug, viewer, notif, onEnableNotif, o
 
       {announcements.map((a) => (
         <button key={a.id} onClick={() => onOpenChat('control')} className="block w-full rounded-[24px] bg-[#7C4DFF] p-4 text-left text-white">
-          <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.12em] text-[#FF9CCB] uppercase"><Megaphone size={13} />Latest call · {firstName(String((a.content as { by?: string }).by ?? 'Show caller'))} · {ago(a.sentAt, now)}</p>
+          <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.12em] text-[#FF9CCB] uppercase"><Megaphone size={13} />Latest call · {firstName(String((a.content as { by?: string }).by ?? 'Event manager'))} · {ago(a.sentAt, now)}</p>
           <p className="mt-1 font-display text-xl leading-snug font-bold">{String((a.content as { text?: string }).text ?? '')}</p>
         </button>
       ))}
@@ -69,7 +70,7 @@ export function Alerts({ state, feed, now, slug, viewer, notif, onEnableNotif, o
         {open.length === 0 ? (
           <p className="rounded-[22px] bg-[#251856] p-5 text-center text-sm text-[#B8ABE6]">No open issues. When a team raises one it shows up here first.</p>
         ) : (
-          <ul className="space-y-2.5">
+          <ul className="space-y-3">
             {open.slice(0, 8).map((i) => (
               <IssueCard key={i.id} i={i} now={now} slug={slug} viewer={viewer} canAct={state.canOpen.includes((i.team ?? 'control') as TeamId)}
                 place={state.places.find((p) => p.id === i.placeId)?.name} tour={tourIssueId ? i.id === tourIssueId : i === firstCriticalNew}
@@ -79,24 +80,7 @@ export function Alerts({ state, feed, now, slug, viewer, notif, onEnableNotif, o
         )}
       </section>
 
-      <section aria-label="Activity">
-        <SectionTitle title="Across the event" sub="latest first" />
-        <ul className="overflow-hidden rounded-[24px] bg-[#251856]">
-          {activity.length === 0 && <li className="p-5 text-center text-sm text-[#B8ABE6]">Loading the chatter…</li>}
-          {activity.map((f) => (
-            <li key={f.id} className="border-b border-[#33236B] last:border-0">
-              <button onClick={() => onOpenChat(f.team)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
-                <TeamBadge team={f.team} size={36} />
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-1.5 text-xs text-[#B8ABE6]"><b className="text-white">{teamOf(f.team).name}</b>· {f.senderId === 'backstagebot' ? 'Backstage' : firstName(f.senderName)}</span>
-                  <span className="block truncate text-[14px]">{preview(f)}</span>
-                </span>
-                <span className="shrink-0 text-[11px] text-[#8C7FC0]">{ago(f.sentAt, now)}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <Activity feed={feed} now={now} onOpenChat={onOpenChat} />
 
       {state.event.refs?.sets?.length ? (
         <section aria-label="Tonight">
@@ -126,7 +110,7 @@ function Stat({ label, value, bg, ink }: { label: string; value: number; bg: str
 
 export function SectionTitle({ title, sub }: { title: string; sub?: string }) {
   return (
-    <div className="mb-2.5 flex items-end justify-between px-1">
+    <div className="mb-3.5 flex items-end justify-between px-1">
       <h2 className="font-display text-[22px] font-extrabold tracking-tight">{title}</h2>
       {sub && <span className="text-xs font-medium text-[#8C7FC0]">{sub}</span>}
     </div>
@@ -147,7 +131,7 @@ export function IssueCard({ i, now, slug, viewer, canAct, place, tour, onOpen, o
   }
   const u = tui(i.team);
   return (
-    <li className="rounded-[24px] bg-[#251856] p-4" style={i.severity === 'critical' ? { boxShadow: 'inset 0 0 0 2px #FF6B5B' } : undefined}>
+    <li className="rounded-[26px] bg-[#251856] p-5" style={i.severity === 'critical' ? { boxShadow: 'inset 0 0 0 2px #FF6B5B' } : undefined}>
       <button onClick={onOpen} className="flex w-full items-start gap-3 text-left">
         <TeamBadge team={i.team ?? 'control'} size={42} />
         <span className="min-w-0 flex-1">
@@ -213,5 +197,61 @@ function Orbit({ state, onOpenChat }: { state: CrewState; onOpenChat: (t: TeamId
         })}
       </div>
     </div>
+  );
+}
+
+/**
+ * "Across the event", folded: one line saying what changed, the two latest updates, and a
+ * team filter once you open it, so the home screen stays calm.
+ */
+function Activity({ feed, now, onOpenChat }: { feed: FeedItem[]; now: number; onOpenChat: (t: TeamId) => void }) {
+  const [open, setOpen] = useState(false);
+  const [only, setOnly] = useState<TeamId | 'all'>('all');
+  const items = feed.filter((f) => f.type !== BS_TYPES.state);
+  const recent = items.filter((f) => now - f.sentAt < 30 * 60_000);
+  const teams = [...new Set(items.map((f) => f.team))];
+  const shown = (only === 'all' ? items : items.filter((f) => f.team === only)).slice(0, open ? 30 : 2);
+  const busiest = teams.map((t) => [t, recent.filter((f) => f.team === t).length] as const).sort((x, y) => y[1] - x[1])[0];
+  return (
+    <section aria-label="Across the event" className="overflow-hidden rounded-[24px] bg-[#251856]">
+      <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex w-full items-center gap-3 px-4 pt-4 pb-3 text-left">
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-[20px] font-extrabold">Across the event</span>
+          <span className="block truncate text-xs text-[#B8ABE6]">
+            {items.length === 0 ? 'Loading the chatter…' : `${recent.length} update${recent.length === 1 ? '' : 's'} in the last 30 min${busiest && busiest[1] ? ` · busiest: ${teamOf(busiest[0]).name}` : ''}`}
+          </span>
+        </span>
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-white/[0.08]"><ChevronDown size={18} className={cx('transition-transform', open && 'rotate-180')} /></span>
+      </button>
+      {open && teams.length > 1 && (
+        <div className="flex gap-1.5 overflow-x-auto px-4 pb-2">
+          <Chip on={only === 'all'} onClick={() => setOnly('all')}>All teams</Chip>
+          {teams.map((t) => <Chip key={t} on={only === t} onClick={() => setOnly(t)}>{teamOf(t).name}</Chip>)}
+        </div>
+      )}
+      <ul>
+        {shown.map((f) => (
+          <li key={f.id} className="border-t border-[#33236B]">
+            <button onClick={() => onOpenChat(f.team)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
+              <TeamBadge team={f.team} size={34} />
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1.5 text-xs text-[#B8ABE6]"><b className="text-white">{teamOf(f.team).name}</b>· {f.senderId === 'backstagebot' ? 'Backstage' : f.mine ? 'You' : firstName(f.senderName)}</span>
+                <span className="block truncate text-[14px]">{preview(f)}</span>
+              </span>
+              <span className="shrink-0 text-[11px] text-[#8C7FC0]">{ago(f.sentAt, now)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      {!open && items.length > 2 && (
+        <button onClick={() => setOpen(true)} className="w-full border-t border-[#33236B] py-2.5 text-sm font-semibold text-[#B9A2FF]">Show all {Math.min(items.length, 30)} updates</button>
+      )}
+    </section>
+  );
+}
+
+function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick} className={cx('h-8 shrink-0 rounded-full px-3 text-xs font-semibold', on ? 'bg-white text-[#160B36]' : 'bg-white/[0.07] text-[#CFC4F5]')}>{children}</button>
   );
 }

@@ -6,25 +6,29 @@ Built for the Nexconn Build Challenge 2026 with the **Nexconn Chat SDK**, the **
 
 ## Try it
 
-Open the app. The home screen lists three events:
+Open the app. The home screen lists the events, with **Create event** at the top.
 
 | Event | How to get in | What you see |
 |---|---|---|
-| **Demo Fest** | No code. Pick a role: Show caller, Security or Runner. | A practice event that is already running. Ten scripted demo crew members (clearly labelled as demo) keep posting real messages, issues and fixes through the Nexconn server API every ~20 s. As show caller you get a hands-on tour: a spotlight shows what to tap, and you actually take a critical issue, message Security (they reply), key the walkie, check the map and mark the issue fixed. |
-| **Mic Drop** (Raahe's open mic at a café in Bangalore) | Viewer code `micdrop-watch` (read-only) or a crew/lead code. | A staged show night run by Smera, RJ, Shashi, Vaibhav, Niharika and Divyansh: sign-ups over capacity, a crackling mic, the coffee machine tripping the power, the crowd spilling onto the footpath, end-of-night walkie clips. **This is seeded demo data, not real usage.** It was sent through the real Nexconn server API by `scripts/seed-events.ts` and `scripts/seed-clips.ts` (the voice clips are text-to-speech stand-ins). |
+| **Sundown Sessions** (interactive demo) | No entry code required. Pick a role: Event manager, Security lead or Runner. | An event that is already running. Ten scripted demo crew members (labelled as a demo) keep posting real messages, issues, fixes and walkie clips through the Nexconn server API every ~20 s. As event manager you get a hands-on tour: a spotlight shows what to tap and waits for you to do it. You take a critical issue, message Security (they answer on the walkie), call the whole Security team (they call you back), key the walkie, check the map, then close the task in Tasks. |
+| **Mic Drop** (Raahe's open mic at a café in Bangalore) | Viewer code `micdrop-watch` (read-only) or a crew/lead code. | A staged show night run by Smera, RJ, Shashi, Vaibhav, Niharika and Divyansh: sign-ups over capacity, a crackling mic, the coffee machine tripping the power, the crowd spilling onto the footpath, end-of-night walkie clips. **This is seeded demo data, not real usage.** It was sent through the real Nexconn server API by `scripts/seed-events.ts` and `scripts/seed-clips.ts`. The voice clips are Microsoft neural text-to-speech stand-ins made by `scripts/make-voices.py`. |
 | **Raahe Unplugged** | Not open yet. | Listed as an upcoming event. |
+| **Your own event** | Create event → name, venue, time, which teams. | You become its event manager and get a crew code (can talk), a viewer code (read-only), a link and a QR code to share. Only the teams you picked get channels. |
 
 ## Crew side (`/e/<slug>/crew`)
 
 | Tab | What it does |
 |---|---|
 | **Alerts** | The event as an orb with every team orbiting it; teams with open issues light up. Open / critical / fixed counts, the latest all-hands call, every open issue with **I’m on it** / **Fixed** (compare-and-set, so two people can’t both take it), and a feed of everything happening across the event. Turn on browser alerts for critical issues. |
+| **Tasks** | Every open task and who is working on what: “Need someone”, “Who’s on what” grouped by person, and “Done tonight”. Filter to just yours; take or close a task in one tap. |
 | **Chats** | A messenger: one chat per team (Control, Artist, Production, Hospitality, Security, Runners, Stalls, FOH, Medical) with last message, unread count and a red dot when a critical issue is open. In a chat: text, photos, hold-the-mic voice clips, and **Raise issue** from the + menu. Viewers can read but not post. A “Classic inbox” entry opens the ready-made Nexconn Chat UI kit. |
 | **Walkie** | A walkie-talkie: LCD screen, channel knob, big **push to talk**. Each transmission is a Nexconn HD voice message on that team’s channel, so it is also in the chat history; with the speaker on, new transmissions play out loud and the screen shows who is talking. **Open line** starts a live group audio call (Call SDK). |
 | **Map** | The venue with every open issue pinned where it is; tap a spot to see its issues or raise one there. |
 | **+** | Raise an issue: team, one-tap starters, severity, place. Critical issues are echoed to Control. |
 
-In-app toasts show new messages from other channels, and issues beep (two tones for critical).
+**Voice call (delayed call):** the green phone in a team chat calls the whole team. Hold, speak, let go: your voice goes out as an HD voice message marked as a call, and every phone on the channel rings and plays it out loud (with Replay and Call back). It works without paid call minutes. Live calls on the Call SDK are wired up but switched off on our Nexconn account.
+
+In-app toasts show new messages from other channels, issues beep (two tones for critical), and walkie transmissions play with a squelch chirp.
 
 ## Audience side (`/e/<slug>`)
 
@@ -35,7 +39,7 @@ The original gig room is unchanged: going-solo meetups, ride shares, song reques
 - **Chat SDK (messages, channels, history):** one group channel per team, plus the gig, crew and per-report rooms; text, image and **HD voice** messages; message history; custom message types `BS:Issue`, `BS:IssueUpd`, `BS:Radio`, `BS:Announce` (and the audience cards), plus the non-persisted `BS:State` signal that refreshes HQ live. Cards are only rendered when the system user sent them (forged cards from devtools are ignored).
 - **Server API:** token issuance, group create/join and server-sent cards (SHA1 signing, Singapore primary/backup failover).
 - **Chat UI kit (`@nexconn/chatui`):** the Classic inbox. Initialised and `ready()` before connect, with our user/group names supplied through `ServiceHooks` and a custom element for Backstage cards.
-- **Call SDK (`@nexconn/call`):** team radio = a multi-party **audio** call per channel. Mics are muted by default (`enableMicrophone(false)`) and opened only while you hold the button; `onRemoteMicrophoneStateChanged` shows who is talking; late joiners `joinCall(callId)` using the call id the server stores in `radio_sessions`.
+- **Call SDK (`@nexconn/call`):** installed before the engine starts and initialised on every crew device. A live “open line” per team is implemented (below), but audio/video calls cost paid minutes, so they are switched off on our account and the app uses the voice-call messages above instead. Design: team radio = a multi-party **audio** call per channel. Mics are muted by default (`enableMicrophone(false)`) and opened only while you hold the button; `onRemoteMicrophoneStateChanged` shows who is talking; late joiners `joinCall(callId)` using the call id the server stores in `radio_sessions`.
 
 **Why viewers sign in as pre-joined accounts:** Nexconn only shows a group’s history from the moment a member joined. So the seed script puts 40 read-only viewer accounts in every Mic Drop channel *before* replaying the night, and the viewer code signs you in as one of them.
 

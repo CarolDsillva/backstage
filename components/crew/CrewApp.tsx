@@ -1,9 +1,9 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Bell, Eye, HelpCircle, Map as MapIcon, MessageCircle, Plus, Radio, X } from 'lucide-react';
+import { ArrowLeft, Bell, Eye, HelpCircle, ListChecks, Map as MapIcon, MessageCircle, Plus, Radio, X } from 'lucide-react';
 import { useCrew } from '@/lib/client/useCrew';
-import { onMessage, reconnectNow, type ChatMsg } from '@/lib/client/nexconn';
+import { isCall, onMessage, reconnectNow, type ChatMsg } from '@/lib/client/nexconn';
 import { acceptIncoming, declineIncoming, onRadio, type RadioState } from '@/lib/client/radio';
 import { isRenderable } from '@/lib/shared/trust';
 import { BS_TYPES, type Incident } from '@/lib/shared/types';
@@ -12,6 +12,8 @@ import { Alerts } from '@/components/comms/Alerts';
 import { ChatList, ChatView } from '@/components/comms/Chats';
 import { Walkie } from '@/components/comms/Walkie';
 import { MapView } from '@/components/comms/MapView';
+import { Tasks } from '@/components/comms/Tasks';
+import { CallIn, CallOut } from '@/components/comms/Call';
 import { IssueSheet } from '@/components/comms/IssueSheet';
 import { Enter } from '@/components/comms/Enter';
 import { DEMO_TOUR, VIEWER_TOUR, Tour, tourSignal, type TourStep } from '@/components/comms/Tour';
@@ -20,7 +22,7 @@ import { TeamBadge, beep, cx, useNow } from '@/components/comms/ui';
 import { TeamPicker } from './TeamPicker';
 import { Inbox } from './Inbox';
 
-type Tab = 'alerts' | 'chats' | 'walkie' | 'map';
+type Tab = 'alerts' | 'chats' | 'tasks' | 'walkie' | 'map';
 type Toast = { id: string; team: TeamId; who: string; text: string; critical: boolean };
 
 const CREW_TOUR: TourStep[] = [
@@ -39,6 +41,8 @@ export function CrewApp({ slug }: { slug: string }) {
   const [walkieTeam, setWalkieTeam] = useState<TeamId | null>(null);
   const [raise, setRaise] = useState<{ team: TeamId; place?: string } | null>(null);
   const [inbox, setInbox] = useState(false);
+  const [callOut, setCallOut] = useState<TeamId | null>(null);
+  const [callIn, setCallIn] = useState<{ id: string; from: string; team: TeamId; url: string } | null>(null);
   const [tour, setTour] = useState<TourStep[] | null>(null);
   const [tourIssue, setTourIssue] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -73,7 +77,7 @@ export function CrewApp({ slug }: { slug: string }) {
   useEffect(() => { tourOn.current = !!tour; }, [tour]);
   const endTour = () => { try { localStorage.setItem(tourKey, '1'); } catch { /* ignore */ } setTour(null); };
 
-  // Demo Fest: keep the show busy while someone is watching.
+  // Demo event: keep the show busy while someone is watching.
   useEffect(() => {
     if (!demo || viewer || !state) return;
     const go = () => { if (document.visibilityState === 'visible' && !tourOn.current) void fetch(`/api/demo/${slug}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'tick' }) }).catch(() => {}); };
@@ -82,7 +86,7 @@ export function CrewApp({ slug }: { slug: string }) {
     return () => { clearTimeout(first); clearInterval(id); };
   }, [demo, viewer, slug, !!state]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const demoReact = useCallback((action: 'took' | 'message' | 'fixed', team: TeamId) => {
+  const demoReact = useCallback((action: 'took' | 'message' | 'fixed' | 'call', team: TeamId) => {
     if (!demo) return;
     setTimeout(() => void fetch(`/api/demo/${slug}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, team }) }).catch(() => {}), 1800);
   }, [demo, slug]);
@@ -98,6 +102,7 @@ export function CrewApp({ slug }: { slug: string }) {
     const t = teamOfChannel.current.get(m.channelId);
     if (!t || m.mine || !isRenderable(m) || m.type === BS_TYPES.state || m.type === BS_TYPES.issueUpdate) return;
     const c = m.content as Record<string, unknown>;
+    if (isCall(m)) { setCallIn({ id: m.id, from: m.senderName, team: t, url: String(c.remoteUrl ?? '') }); return; }
     const critical = m.type === BS_TYPES.issue && c.severity === 'critical';
     if (m.type === BS_TYPES.issue) beep(critical);
     if (document.visibilityState !== 'visible' && typeof Notification !== 'undefined' && Notification.permission === 'granted' && (m.type === BS_TYPES.issue || m.type === BS_TYPES.announce)) {
@@ -109,12 +114,12 @@ export function CrewApp({ slug }: { slug: string }) {
     setTimeout(() => setToasts((x) => x.filter((y) => y.id !== toast.id)), critical ? 9000 : 5000);
   }), []);
 
-  if (status === 'notfound') return <Center title="This event doesn’t exist" body="Check the link from your show caller." />;
+  if (status === 'notfound') return <Center title="This event doesn’t exist" body="Check the link from your event manager." />;
   if (status === 'checkin') return <Enter slug={slug} onDone={(t) => { crew.setToken(t); void crew.refetch(); }} />;
   if (status === 'error' && !state) return <Center title="Can’t reach backstage" body="Check your connection." action={() => void crew.refetch()} />;
   if (!state) return <Center title="Getting your radio…" spinner />;
   if ((!state.me.team && !viewer) || switching) {
-    return <TeamPicker slug={slug} name={state.me.name} isLead={state.me.role === 'lead'} current={state.me.team}
+    return <TeamPicker slug={slug} name={state.me.name} isLead={state.me.role === 'lead'} current={state.me.team} teams={state.event.refs?.teams}
       onDone={() => { setSwitching(false); void crew.refetch(); }} onCancel={switching ? () => setSwitching(false) : undefined} />;
   }
 
@@ -122,7 +127,8 @@ export function CrewApp({ slug }: { slug: string }) {
   const wTeam: TeamId = walkieTeam && state.canOpen.includes(walkieTeam) ? walkieTeam : home;
   const openChat = (t: TeamId) => { if (state.canOpen.includes(t)) setChat(t); };
   const unreadTotal = Object.values(crew.unread).reduce((a, b) => a + (b ?? 0), 0);
-  const openCount = state.issues.filter((i) => i.status !== 'resolved').length;
+  const openCount = state.issues.filter((i) => i.status !== 'resolved' && i.severity === 'critical').length;
+  const freeCount = state.issues.filter((i) => i.status === 'new').length;
   const started = new Date(state.event.startsAt).getTime();
   const liveFor = state.phase === 'live' && now > started ? Math.floor((now - started) / 60000) : null;
   const raahe = state.event.artist === 'Raahe';
@@ -132,7 +138,7 @@ export function CrewApp({ slug }: { slug: string }) {
   return (
     <div className="min-h-dvh bg-[#0B0620]">
       <div className="cosmos relative mx-auto min-h-dvh max-w-[480px] text-white">
-        <header className="sticky top-0 z-30 flex items-center gap-3 bg-[#160B36]/80 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 backdrop-blur">
+        <header className="sticky top-0 z-30 flex items-center gap-3 bg-[#160B36]/80 px-5 pt-[max(0.9rem,env(safe-area-inset-top))] pb-3.5 backdrop-blur">
           <Link href="/" aria-label="All events" className="shrink-0">
             {raahe
               // eslint-disable-next-line @next/next/no-img-element
@@ -145,7 +151,7 @@ export function CrewApp({ slug }: { slug: string }) {
             <p className="flex items-center gap-1.5 truncate text-xs text-[#B8ABE6]">
               {state.phase === 'live' && <span className="flex items-center gap-1 rounded-full bg-[#FF6B5B] px-1.5 py-px text-[10px] font-bold text-white"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#251856]" />LIVE{liveFor !== null && liveFor < 600 ? ` ${Math.floor(liveFor / 60)}:${String(liveFor % 60).padStart(2, '0')}` : ''}</span>}
               {viewer ? <span className="flex items-center gap-1 font-semibold text-[#B7AEFF]"><Eye size={12} />Viewing as guest</span>
-                : <span>{state.me.name.startsWith('You · ') ? `You · ${state.me.role === 'lead' ? 'Show caller' : teamOf(home).name}` : `${firstName(state.me.name)} · ${state.me.role === 'lead' ? 'Show caller' : teamOf(home).name}`}</span>}
+                : <span>{/^(You|Guest) · /.test(state.me.name) ? 'You' : firstName(state.me.name)} · {state.me.role === 'lead' ? 'Event manager' : teamOf(home).name}</span>}
             </p>
           </div>
           <Conn status={crew.conn} />
@@ -153,9 +159,9 @@ export function CrewApp({ slug }: { slug: string }) {
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#251856]" aria-label="Replay the walkthrough"><HelpCircle size={19} /></button>
         </header>
 
-        <div className="px-4 pb-3">
+        <div className="px-5 pt-2 pb-5">
           <h1 className="grad-text font-display text-[38px] leading-none font-extrabold tracking-tight">
-            {tab === 'alerts' ? 'Alerts' : tab === 'chats' ? 'Chats' : tab === 'walkie' ? 'Walkie' : 'Live map'}
+            {tab === 'alerts' ? 'Alerts' : tab === 'chats' ? 'Chats' : tab === 'tasks' ? 'Tasks' : tab === 'walkie' ? 'Walkie' : 'Live map'}
           </h1>
         </div>
 
@@ -164,6 +170,7 @@ export function CrewApp({ slug }: { slug: string }) {
             onEnableNotif={() => void Notification.requestPermission().then(setNotif)} onOpenChat={openChat} onChanged={() => void crew.refetch()}
             onIssueAction={onIssueAction} tourIssueId={tour ? tourIssue : null} />}
           {tab === 'chats' && <ChatList state={state} feed={crew.feed} unread={crew.unread} now={now} onOpen={openChat} onInbox={() => setInbox(true)} />}
+          {tab === 'tasks' && <Tasks state={state} now={now} slug={slug} viewer={viewer} onOpenChat={openChat} onChanged={() => void crew.refetch()} onIssueAction={onIssueAction} tourIssueId={tour ? tourIssue : null} />}
           {tab === 'walkie' && <Walkie state={state} teamId={wTeam} slug={slug} viewer={viewer} onChange={setWalkieTeam} onSent={() => tourSignal('voice')} />}
           {tab === 'map' && <MapView state={state} now={now} viewer={viewer} onOpenChat={openChat} onRaise={(p) => setRaise({ team: home, place: p })} />}
           {state.me.role === 'lead' && !viewer && tab === 'alerts' && !demo && (
@@ -199,14 +206,15 @@ export function CrewApp({ slug }: { slug: string }) {
         )}
 
         {/* Bottom nav: black pill */}
-        <nav aria-label="Sections" className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[480px] px-4 pb-[max(0.9rem,env(safe-area-inset-bottom))]">
-          <div className="flex items-center gap-1 rounded-full border border-white/10 bg-[#0E0726]/85 p-1.5 shadow-[0_18px_40px_-14px_rgba(0,0,0,.8)] backdrop-blur-xl">
+        <nav aria-label="Sections" className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[480px] px-5 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="flex items-center justify-between rounded-full border border-white/10 bg-[#0E0726]/85 p-2 shadow-[0_18px_40px_-14px_rgba(0,0,0,.8)] backdrop-blur-xl">
             <NavBtn tour="tab-alerts" active={tab === 'alerts'} onClick={() => { setTab('alerts'); setChat(null); }} icon={<Bell size={20} />} label="Alerts" badge={openCount} />
             <NavBtn tour="tab-chats" active={tab === 'chats'} onClick={() => { setTab('chats'); setChat(null); }} icon={<MessageCircle size={20} />} label="Chats" badge={unreadTotal} />
             {!viewer && (
               <button data-tour="raise" onClick={() => setRaise({ team: home })} aria-label="Raise an issue"
-                className="grid h-14 w-14 shrink-0 place-items-center rounded-full orb text-white transition-transform active:scale-95"><Plus size={26} strokeWidth={2.6} /></button>
+                className="grid h-12 w-12 shrink-0 place-items-center rounded-full orb text-white transition-transform active:scale-95"><Plus size={24} strokeWidth={2.6} /></button>
             )}
+            <NavBtn tour="tab-tasks" active={tab === 'tasks'} onClick={() => { setTab('tasks'); setChat(null); }} icon={<ListChecks size={20} />} label="Tasks" badge={freeCount} />
             <NavBtn tour="tab-walkie" active={tab === 'walkie'} onClick={() => { setTab('walkie'); setChat(null); }} icon={<Radio size={20} />} label="Walkie" />
             <NavBtn tour="tab-map" active={tab === 'map'} onClick={() => { setTab('map'); setChat(null); }} icon={<MapIcon size={20} />} label="Map" />
           </div>
@@ -215,6 +223,7 @@ export function CrewApp({ slug }: { slug: string }) {
         {chat && (
           <ChatView state={state} teamId={chat} slug={slug} viewer={viewer} onBack={() => setChat(null)} onRaise={() => setRaise({ team: chat })}
             onWalkie={() => { setWalkieTeam(chat); setTab('walkie'); setChat(null); }}
+            onCall={() => setCallOut(chat)}
             onSent={(k) => { tourSignal(k === 'voice' ? 'voice' : 'sent'); if (k === 'text' && (tour || demo)) demoReact('message', chat); }} />
         )}
         {raise && (
@@ -230,6 +239,10 @@ export function CrewApp({ slug }: { slug: string }) {
             <div className="min-h-0 flex-1"><Inbox /></div>
           </div>
         )}
+        {callOut && <CallOut state={state} teamId={callOut} onClose={() => setCallOut(null)}
+          onSent={() => { tourSignal('called'); if (demo) setTimeout(() => demoReact('call', callOut), 2500); }} />}
+        {callIn && <CallIn key={callIn.id} from={callIn.from} teamId={callIn.team} url={callIn.url} onClose={() => setCallIn(null)}
+          onCallBack={() => { const t = callIn.team; setCallIn(null); setCallOut(t); }} />}
         {tour && <Tour steps={tour} onDone={endTour} />}
       </div>
     </div>
@@ -239,9 +252,10 @@ export function CrewApp({ slug }: { slug: string }) {
 function NavBtn({ active, onClick, icon, label, badge, tour }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string; badge?: number; tour: string }) {
   return (
     <button data-tour={tour} onClick={onClick} aria-current={active ? 'page' : undefined}
-      className={cx('relative flex h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[11px] font-semibold transition-colors', active ? 'bg-[#7C4DFF] text-white shadow-[0_0_20px_rgba(124,77,255,.6)]' : 'text-white/55')}>
-      {icon}<span>{label}</span>
-      {!!badge && <span className="absolute top-1 right-[18%] grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[#EC4F9B] px-1 text-[10px] font-bold text-white">{badge > 99 ? '99+' : badge}</span>}
+      aria-label={label}
+      className={cx('relative flex h-12 items-center justify-center gap-2 rounded-full text-[13px] font-bold transition-all duration-300', active ? 'bg-[#7C4DFF] px-4 text-white shadow-[0_0_22px_rgba(124,77,255,.55)]' : 'w-12 text-white/60 hover:text-white')}>
+      {icon}{active && <span className="whitespace-nowrap">{label}</span>}
+      {!!badge && <span className={cx('absolute grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[#EC4F9B] px-1 text-[10px] font-bold text-white ring-2 ring-[#0E0726]', active ? '-top-1 -right-1' : 'top-0.5 right-0.5')}>{badge > 99 ? '99+' : badge}</span>}
     </button>
   );
 }

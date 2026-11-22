@@ -78,10 +78,10 @@ async function main() {
   });
 
   const demo = await upsertEvent({
-    id: 'evdemofest', slug: 'demo-fest', title: 'Demo Fest', artist: 'Neon Monsoon', venue: 'Bandstand Grounds, Mumbai',
+    id: 'evdemofest', slug: 'sundown-sessions', title: 'Sundown Sessions', artist: 'Neon Monsoon', venue: 'Bandstand Grounds, Mumbai',
     codes: [`crew-${rand()}`, `lead-${rand()}`, `artist-${rand()}`],
     refs: {
-      demo: true, tagline: 'Practice event · try any role',
+      demo: true, tagline: 'Interactive demo · no entry code required',
       doors: '6:30 PM',
       sets: [{ time: '7:00 PM', name: 'Opening DJ' }, { time: '8:00 PM', name: 'Neon Monsoon' }],
       contacts: [{ role: 'Stage manager', name: 'Isha', channel: 'CH01' }, { role: 'Security', name: 'Vikram', channel: 'CH05' }],

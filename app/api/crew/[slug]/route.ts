@@ -26,6 +26,8 @@ export async function GET(_req: Request, ctx: RouteContext<'/api/crew/[slug]'>) 
       canOpen: c.canOpen,
       channels: open,
       places, conditions, issues, crew, radio,
+      // The event manager can invite people: crew code (talk) and viewer code (read-only).
+      invite: c.role === 'lead' && !c.viewer && !c.ev.refs?.demo ? { crew: c.ev.crewCode, viewer: c.ev.refs?.viewerCode ?? null } : null,
       serverTime: new Date().toISOString(),
     }, { headers: { 'cache-control': 'no-store' } });
   } catch (e) {

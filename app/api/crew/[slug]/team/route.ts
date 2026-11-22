@@ -18,9 +18,9 @@ export async function POST(req: Request, ctx: RouteContext<'/api/crew/[slug]/tea
     if (!p.success) throw new HttpError(400, 'Pick a team');
     const c = await requireCrew(slug, { write: true });
     await setTeam(c.ev.id, c.userId, p.data.team);
-    const channels = await joinTeamChannels(c.ev.id, c.ev.title, c.userId, c.role, p.data.team);
+    const channels = await joinTeamChannels(c.ev.id, c.ev.title, c.userId, c.role, p.data.team, c.ev.refs?.teams);
     if (channels.control) await signal(channels.control, { kind: 'crew' });
-    return Response.json({ team: p.data.team, canOpen: channelsFor(c.role, p.data.team), channels });
+    return Response.json({ team: p.data.team, canOpen: channelsFor(c.role, p.data.team, c.ev.refs?.teams), channels });
   } catch (e) {
     return errorResponse(e);
   }

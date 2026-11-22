@@ -8,9 +8,11 @@ import type { ChatMsg } from '@/lib/client/nexconn';
 import type { CrewState } from '@/lib/client/useCrew';
 import { team as teamOf, type TeamId } from '@/lib/shared/teams';
 import { VoiceClip, firstName } from './Messages';
-import { chNo, clock, cx } from './ui';
+import { chNo, chirp, clock, cx } from './ui';
 
 const APP_KEY = process.env.NEXT_PUBLIC_NEXCONN_APP_KEY ?? '';
+/** Live group calls (Call SDK) cost paid minutes; turn on with NEXT_PUBLIC_LIVE_CALLS=1 once the account has them. */
+const LIVE_CALLS = process.env.NEXT_PUBLIC_LIVE_CALLS === '1';
 
 /**
  * A walkie-talkie. Pick a channel with the knob, hold the big button to talk.
@@ -50,8 +52,9 @@ export function Walkie({ state, teamId, slug, viewer, onChange, onSent }: {
     if (!url) return;
     const a = new Audio(url);
     setRx({ name: last.senderName, until: Date.now() + Number((last.content as { duration?: number }).duration ?? 3) * 1000 });
-    a.onended = () => setRx(null);
-    void a.play().catch(() => setRx(null));
+    a.onended = () => { setRx(null); chirp(); };
+    chirp();
+    setTimeout(() => void a.play().catch(() => setRx(null)), 160);
   }, [room.messages, speaker]);
 
   async function down() {
@@ -76,7 +79,7 @@ export function Walkie({ state, teamId, slug, viewer, onChange, onSent }: {
     : { top: 'STBY', main: t.short, sub: room.status === 'online' ? `${clips.length} CLIP${clips.length === 1 ? '' : 'S'} ON CHANNEL` : 'TUNING…' };
 
   return (
-    <div className="px-4 pt-1 pb-32">
+    <div className="px-5 pb-36">
       {/* The device */}
       <div className="relative mx-auto mt-10 max-w-[360px]">
         <span className="absolute -top-10 left-9 h-14 w-4 rounded-t-full bg-[#0B0620]" aria-hidden />
@@ -130,7 +133,7 @@ export function Walkie({ state, teamId, slug, viewer, onChange, onSent }: {
               className={cx('flex h-10 items-center gap-1.5 rounded-full px-4 text-xs font-bold', speaker ? 'bg-[#251856] text-white' : 'bg-[#2A2532] text-white/70')}>
               {speaker ? <Volume2 size={15} /> : <VolumeX size={15} />}Speaker {speaker ? 'on' : 'off'}
             </button>
-            {!viewer && radioAvailable() && (onAir ? (
+            {!viewer && LIVE_CALLS && radioAvailable() && (onAir ? (
               <button onClick={() => void leave()} className="flex h-10 items-center gap-1.5 rounded-full bg-[#FF6B5B] px-4 text-xs font-bold text-white"><PhoneOff size={15} />Close line</button>
             ) : (
               <button onClick={() => channelId && void goLive({ slug, team: teamId, channelId, existingCallId: liveSession?.callId,
@@ -152,7 +155,7 @@ export function Walkie({ state, teamId, slug, viewer, onChange, onSent }: {
       {viewer && <p className="mx-auto mt-3 max-w-[360px] text-center text-sm text-[#B8ABE6]">Guests can listen. Crew hold the button to talk.</p>}
 
       {/* Channel strip */}
-      <div className="-mx-4 mt-6 flex gap-2 overflow-x-auto px-4 pb-1" role="radiogroup" aria-label="Channel">
+      <div className="-mx-5 mt-8 flex gap-2 overflow-x-auto px-5 pb-1" role="radiogroup" aria-label="Channel">
         {channels.map((c) => (
           <button key={c} role="radio" aria-checked={c === teamId} onClick={() => onChange(c)}
             className={cx('shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold', c === teamId ? 'bg-[#7C4DFF] text-white' : 'bg-[#251856] text-[#CFC4F5]')}>

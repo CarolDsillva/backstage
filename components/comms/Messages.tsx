@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Hand, Megaphone, Mic, Pause, Play, Radio } from 'lucide-react';
-import { cardDigest, type ChatMsg } from '@/lib/client/nexconn';
+import { cardDigest, isCall, type ChatMsg } from '@/lib/client/nexconn';
 import { BS_TYPES } from '@/lib/shared/types';
 import { ISSUE_STATUS_LABEL } from '@/lib/shared/teams';
 import { Face, SEV, clock, cx, tui } from './ui';
@@ -10,7 +10,7 @@ import { Face, SEV, clock, cx, tui } from './ui';
 export function preview(m: ChatMsg): string {
   const c = m.content as Record<string, unknown>;
   if (m.type === 'RC:TxtMsg') return String(c.text ?? c.content ?? '');
-  if (m.type === 'RC:HQVCMsg') return `🎙️ Walkie clip${c.duration ? ` · ${c.duration}s` : ''}`;
+  if (m.type === 'RC:HQVCMsg') return `${isCall(m) ? '📞 Voice call' : '🎙️ Walkie clip'}${c.duration ? ` · ${c.duration}s` : ''}`;
   if (m.type === 'RC:ImgMsg') return '📷 Photo';
   return cardDigest(m.type, c);
 }
@@ -56,13 +56,13 @@ export function Bubble({ m, team }: { m: ChatMsg; team: string }) {
   if (m.type === BS_TYPES.announce) {
     return (
       <div className="mx-auto w-full max-w-sm rounded-[22px] bg-[#7C4DFF] p-4 text-white">
-        <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-wide text-[#FF9CCB] uppercase"><Megaphone size={13} />All hands · {firstName(String(c.by ?? 'Show caller'))}</p>
+        <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-wide text-[#FF9CCB] uppercase"><Megaphone size={13} />All hands · {firstName(String(c.by ?? 'Event manager'))}</p>
         <p className="mt-1 font-display text-lg leading-snug font-bold">{String(c.text ?? '')}</p>
       </div>
     );
   }
   let body: React.ReactNode;
-  if (m.type === 'RC:HQVCMsg') body = <VoiceClip url={String(c.remoteUrl ?? '')} secs={Number(c.duration ?? 0)} mine={m.mine} />;
+  if (m.type === 'RC:HQVCMsg') body = <>{isCall(m) && <p className="mb-1 flex items-center gap-1 text-[11px] font-bold tracking-wide uppercase opacity-80">📞 Voice call to everyone</p>}<VoiceClip url={String(c.remoteUrl ?? '')} secs={Number(c.duration ?? 0)} mine={m.mine} /></>;
   else if (m.type === 'RC:ImgMsg') {
     const thumb = c.thumbnailBase64 ?? c.content;
     const src = String(c.remoteUrl || c.imageUri || (thumb ? `data:image/jpeg;base64,${thumb}` : ''));
@@ -73,7 +73,7 @@ export function Bubble({ m, team }: { m: ChatMsg; team: string }) {
   return (
     <div className={cx('flex items-end gap-2', m.mine ? 'justify-end' : 'justify-start')}>
       {!m.mine && <Face name={m.senderName} size={30} />}
-      <div className={cx('max-w-[80%] rounded-[22px] px-3.5 py-2.5 text-[15px] leading-snug', m.mine ? 'rounded-br-md bg-[#EC4F9B] text-white' : 'rounded-bl-md bg-[#251856] text-white')}>
+      <div className={cx('max-w-[80%] rounded-[22px] px-4 py-3 text-[15px] leading-snug', m.mine ? 'rounded-br-md bg-[#EC4F9B] text-white' : 'rounded-bl-md bg-[#251856] text-white')}>
         {!m.mine && <p className="mb-0.5 text-xs font-bold" style={{ color: team === 'control' ? '#FF8CC6' : u.ink }}>{m.senderName}</p>}
         {body}
         <p className={cx('mt-0.5 text-right text-[10px]', m.mine ? 'text-white/75' : 'text-[#8C7FC0]')}>{clock(m.sentAt)}</p>

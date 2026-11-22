@@ -59,7 +59,7 @@ export function CrewCheckIn({ slug, knownName, onDone, instant }: { slug: string
 
       {/* The pass */}
       <div className="rise mt-6 overflow-hidden rounded-[1.75rem] border border-line bg-velvet">
-        <div className="h-3 bg-[repeating-linear-gradient(135deg,#c6f36b_0_12px,#0b0a10_12px_24px)]" aria-hidden />
+        <div className="h-3 bg-[repeating-linear-gradient(135deg,#B9A2FF_0_12px,#0b0a10_12px_24px)]" aria-hidden />
         <div className="p-5">
           <p className="text-sm text-haze">Backstage pass</p>
           <p className="mt-1 text-2xl font-extrabold leading-tight">{event?.title ?? 'Tonight’s gig'}</p>

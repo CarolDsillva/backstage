@@ -335,14 +335,21 @@ export async function loadHistory(channelId: string, pageSize = 50): Promise<Cha
 }
 
 /** Walkie clip: an HD voice message (Chat SDK). */
-export async function sendVoice(channelId: string, file: File): Promise<ChatMsg> {
+export async function sendVoice(channelId: string, file: File, opts: { call?: boolean } = {}): Promise<ChatMsg> {
   const { GroupChannel, Helper } = await loadSdk();
   const prep = await Helper.createSendHDVoiceMessageParams(file);
   if (!prep.isOk || !prep.data) throw new Error('Could not prepare voice clip');
-  Object.assign(prep.data.content as object, { senderUserInfo: { userId: myUserId, name: myName } });
+  // A voice call is an HD voice message marked in its `extra` field: every phone on the channel rings and plays it.
+  Object.assign(prep.data.content as object, { senderUserInfo: { userId: myUserId, name: myName }, ...(opts.call ? { extra: JSON.stringify({ call: true }) } : {}) });
   const r = await new GroupChannel(channelId).sendMediaMessage(prep.data);
   if (!r.isOk || !r.data) throw new Error(`send failed (${r.code})`);
   return toChatMsg(r.data);
+}
+
+/** True when a voice message was sent as a voice call (rings everyone on the channel). */
+export function isCall(m: { type: string; content: Record<string, unknown> }) {
+  if (m.type !== 'RC:HQVCMsg' || typeof m.content.extra !== 'string') return false;
+  try { return !!(JSON.parse(m.content.extra) as { call?: boolean }).call; } catch { return false; }
 }
 
 export function myId() {

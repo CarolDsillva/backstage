@@ -7,8 +7,8 @@ import type { EventRow } from '@/lib/shared/types';
 import { cx } from './ui';
 
 const PERSONAS = [
-  { id: 'lead', label: 'Show caller', blurb: 'Hears every team. Runs the night.', icon: Radio, bg: '#EC4F9B', ink: '#fff' },
-  { id: 'security', label: 'Security', blurb: 'Gates, barriers and the crowd.', icon: ShieldCheck, bg: '#4A1D3F', ink: '#FF9A8F' },
+  { id: 'lead', label: 'Event manager', blurb: 'Runs the event. Sees every team’s chat.', icon: Radio, bg: '#EC4F9B', ink: '#fff' },
+  { id: 'security', label: 'Security lead', blurb: 'Gates, barriers and the crowd.', icon: ShieldCheck, bg: '#4A1D3F', ink: '#FF9A8F' },
   { id: 'runners', label: 'Runner', blurb: 'Fetch, carry, fix fast.', icon: Footprints, bg: '#123F3E', ink: '#5EE6C0' },
 ] as const;
 
@@ -39,6 +39,7 @@ export function Enter({ slug, onDone }: { slug: string; onDone: (token?: string)
   }
 
   const demo = !!ev?.refs?.demo;
+  if (!ev) return <main className="cosmos mx-auto grid min-h-dvh w-full max-w-[480px] place-items-center"><span className="h-12 w-12 animate-spin rounded-full border-4 border-white/10 border-t-[#EC4F9B]" aria-label="Loading" /></main>;
   const raahe = ev?.artist === 'Raahe';
   return (
     <main className="cosmos mx-auto flex min-h-dvh w-full max-w-[480px] flex-col px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-white">
@@ -49,7 +50,7 @@ export function Enter({ slug, onDone }: { slug: string; onDone: (token?: string)
           // eslint-disable-next-line @next/next/no-img-element
           ? <img src="/raahe-logo.png" alt="Raahe" className="h-20 w-20 rounded-[24px]" />
           // eslint-disable-next-line @next/next/no-img-element
-          : <img src="/demofest-logo.svg" alt="Demo Fest" className="h-20 w-20 rounded-[24px]" />}
+          : <img src="/demofest-logo.svg" alt="" className="h-20 w-20 rounded-[24px]" />}
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.14em] text-[#EC4F9B] uppercase">{ev?.refs?.tagline ?? 'Crew comms'}</p>
           <h1 className="font-display text-[34px] leading-[1] font-extrabold tracking-tight">{ev?.title ?? ' '}</h1>
@@ -60,7 +61,7 @@ export function Enter({ slug, onDone }: { slug: string; onDone: (token?: string)
       {demo ? (
         <>
           <h2 className="mt-8 font-display text-2xl font-extrabold">Who do you want to be?</h2>
-          <p className="mt-1 text-[15px] text-[#B8ABE6]">No code needed. Everyone else here is a scripted demo crew member, and the show is already running.</p>
+          <p className="mt-1 text-[15px] text-[#B8ABE6]">No entry code required. This is an interactive demo: the event is already running and everyone else is a scripted crew member.</p>
           <div className="mt-4 space-y-2.5">
             {PERSONAS.map((p, k) => (
               <button key={p.id} onClick={() => void enter({ persona: p.id }, p.id)} disabled={!!busy}
@@ -68,7 +69,7 @@ export function Enter({ slug, onDone }: { slug: string; onDone: (token?: string)
                 style={{ background: p.bg, color: p.ink, animationDelay: `${k * 60}ms` }}>
                 <span className="grid h-14 w-14 place-items-center rounded-[18px] bg-white/25"><p.icon size={26} /></span>
                 <span className="flex-1">
-                  {p.id === 'lead' && <span className="mb-1 inline-block rounded-full bg-[#251856] px-2 py-0.5 text-[10px] font-bold text-[#FF8CC6]">BEST FOR THE TOUR</span>}
+                  {p.id === 'lead' && <span className="mb-1 inline-block rounded-full bg-[#251856] px-2 py-0.5 text-[10px] font-bold text-[#FF8CC6]">GUIDED TOUR</span>}
                   <span className="block font-display text-[22px] leading-tight font-extrabold">{p.label}</span>
                   <span className="text-sm opacity-85">{busy === p.id ? 'Getting your radio…' : p.blurb}</span>
                 </span>

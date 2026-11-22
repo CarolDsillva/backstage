@@ -83,9 +83,9 @@ export function useRoom(channelId: string | null, me: Me | null, slug?: string) 
     bumpActivity(slug);
   }, [channelId, slug]);
 
-  const voice = useCallback(async (f: File) => {
+  const voice = useCallback(async (f: File, call = false) => {
     if (!channelId) return;
-    append(await sendVoice(channelId, f));
+    append(await sendVoice(channelId, f, { call }));
     bumpActivity(slug);
   }, [channelId, slug]);
 

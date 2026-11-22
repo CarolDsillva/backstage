@@ -46,8 +46,10 @@ export const ISSUE_STATUS_LABEL: Record<string, string> = {
 };
 
 /** Which teams a member can open. Leads (show callers) hear every channel. */
-export function channelsFor(role: string, myTeam: string | null): TeamId[] {
-  if (role === 'lead') return [...TEAM_IDS];
-  if (!isTeam(myTeam) || myTeam === 'control') return ['control'];
+export function channelsFor(role: string, myTeam: string | null, eventTeams?: readonly string[] | null): TeamId[] {
+  // An event can run with only some teams (set when it is created). Control is always there.
+  const on = (t: TeamId) => t === 'control' || !eventTeams?.length || eventTeams.includes(t);
+  if (role === 'lead') return TEAM_IDS.filter(on);
+  if (!isTeam(myTeam) || myTeam === 'control' || !on(myTeam)) return ['control'];
   return ['control', myTeam];
 }

@@ -99,6 +99,50 @@ export function clock(ts: number) {
   return new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
+/** Walkie squelch: a short two-note chirp before a transmission plays. */
+export function chirp() {
+  try {
+    const ctx = new AudioContext();
+    [[1250, 0], [950, 0.07]].forEach(([f, t]) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'square';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.05, ctx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t + 0.065);
+      o.connect(g).connect(ctx.destination);
+      o.start(ctx.currentTime + t);
+      o.stop(ctx.currentTime + t + 0.07);
+    });
+    setTimeout(() => void ctx.close(), 500);
+  } catch { /* audio blocked */ }
+}
+
+/** Phone-style ring (two bursts), resolves when done. */
+export function ring(): Promise<void> {
+  return new Promise((resolve) => {
+    try {
+      const ctx = new AudioContext();
+      for (let k = 0; k < 2; k++) {
+        const t = ctx.currentTime + k * 0.55;
+        [440, 480].forEach((f) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.frequency.value = f;
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.07, t + 0.03);
+          g.gain.setValueAtTime(0.07, t + 0.35);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+          o.connect(g).connect(ctx.destination);
+          o.start(t);
+          o.stop(t + 0.45);
+        });
+      }
+      setTimeout(() => { void ctx.close(); resolve(); }, 1150);
+    } catch { resolve(); }
+  });
+}
+
 /** Short beep through WebAudio (no asset). Critical = two tones. */
 export function beep(critical = false) {
   try {

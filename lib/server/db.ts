@@ -200,7 +200,7 @@ type IncidentDb = {
   status: IncidentStatus; reporter_id: string; channel_id: string; created_at: string; users: { name: string } | null;
 };
 
-const INC_SELECT = 'id,event_id,place_id,category,note,status,reporter_id,channel_id,created_at,users(name)';
+const INC_SELECT = 'id,event_id,place_id,category,note,status,reporter_id,channel_id,created_at,users:users!incidents_reporter_id_fkey(name)';
 
 function mapIncident(r: IncidentDb): Incident {
   return {
@@ -351,8 +351,9 @@ export async function staffRoles(eventId: string): Promise<Record<string, Role>>
 /** Public, no-login preview for the welcome screen: counts and initials only, no names. */
 export async function roomPreview(eventId: string) {
   const [count, recent] = await Promise.all([
-    db().from('memberships').select('user_id', { count: 'exact', head: true }).eq('event_id', eventId),
-    db().from('memberships').select('joined_at,users(name)').eq('event_id', eventId).order('joined_at', { ascending: false }).limit(4),
+    // Audience members only: crew and the read-only viewer accounts are not "in the room".
+    db().from('memberships').select('user_id', { count: 'exact', head: true }).eq('event_id', eventId).eq('role', 'attendee').or('team.is.null,team.neq.viewer'),
+    db().from('memberships').select('joined_at,users(name)').eq('event_id', eventId).eq('role', 'attendee').or('team.is.null,team.neq.viewer').order('joined_at', { ascending: false }).limit(4),
   ]);
   const faces = ((recent.data ?? []) as unknown as { users: { name: string } | null }[])
     .map((r) => (r.users?.name ?? '?').trim().split(/\s+/).map((w) => w[0] ?? '').join('').slice(0, 2).toUpperCase());

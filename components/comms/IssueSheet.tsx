@@ -77,11 +77,11 @@ export function IssueSheet({ state, slug, initialTeam, initialPlace, onClose, on
         <div className="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Severity">
           {SEVERITIES.map((s) => {
             const on = severity === s.id;
-            const bg = s.id === 'critical' ? '#FF6B5B' : s.id === 'urgent' ? '#3F3014' : '#7C4DFF';
+            const bg = s.id === 'critical' ? '#FF6B5B' : s.id === 'urgent' ? '#FFCB5C' : '#7C4DFF';
             return (
               <button type="button" key={s.id} role="radio" aria-checked={on} onClick={() => setSeverity(s.id)}
                 className="rounded-2xl px-3 py-2.5 text-left"
-                style={on ? { background: bg, color: s.id === 'urgent' ? '#FFCB5C' : '#fff' } : { background: '#fff', color: '#E6DFFF' }}>
+                style={on ? { background: bg, color: s.id === 'urgent' ? '#2A1A00' : '#fff' } : { background: '#251856', color: '#E6DFFF' }}>
                 <span className="block text-sm font-bold">{s.label}</span>
                 <span className="block text-[11px] opacity-75">{s.hint}</span>
               </button>

@@ -2,7 +2,7 @@ import { currentUserId } from './auth';
 import { getEventBySlug, getUser, type EventSecrets } from './db';
 import { getMembership } from './crew';
 import { HttpError } from './http';
-import { TEAM_IDS, channelsFor, isTeam, type TeamId } from '@/lib/shared/teams';
+import { channelsFor, isTeam, type TeamId } from '@/lib/shared/teams';
 import type { Role } from '@/lib/shared/types';
 
 export type CrewCtx = {
@@ -29,11 +29,11 @@ export async function requireCrew(slug: string, opts: { write?: boolean } = {}):
   const name = user?.name ?? 'Crew';
   if (m.team === VIEWER_TEAM) {
     if (opts.write) throw new HttpError(403, 'You’re watching as a viewer, so this is read-only.');
-    return { ev, userId, name, role: m.role, team: null, canOpen: [...TEAM_IDS], viewer: true };
+    return { ev, userId, name, role: m.role, team: null, canOpen: channelsFor('lead', null, ev.refs?.teams), viewer: true };
   }
   if (!CREW_ROLES.includes(m.role)) throw new HttpError(403, 'This is the crew side. Ask your lead for the crew code.');
   const myTeam = isTeam(m.team) ? m.team : m.role === 'artist' ? 'artist' : null;
-  return { ev, userId, name, role: m.role, team: myTeam, canOpen: channelsFor(m.role, myTeam), viewer: false };
+  return { ev, userId, name, role: m.role, team: myTeam, canOpen: channelsFor(m.role, myTeam, ev.refs?.teams), viewer: false };
 }
 
 /** Throws 403 unless the member may use this team's channel. */

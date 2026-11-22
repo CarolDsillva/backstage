@@ -91,6 +91,8 @@ export type EventRefs = {
   viewerPool?: number;
   /** Demo event: anyone can enter by picking a role, and scripted demo crew keep it busy. */
   demo?: boolean;
+  /** Teams this event runs with (Control is always included). Unset = all nine. */
+  teams?: string[];
   /** Short label for the event card (e.g. "Mumbai · Tonight"). */
   tagline?: string;
 };
