@@ -1,5 +1,5 @@
 import { db, check, listPlaces, upsertUser, type EventSecrets } from './db';
-import { ensureTeamChannel, joinTeamChannels, listIssues } from './crew';
+import { ensureTeamChannel, joinTeamChannels, listIssues, updateIssue } from './crew';
 import { issueToken, sendGroupMessage } from './nexconn';
 import { raiseIssue, actOnIssue } from './issues';
 import type { TeamId } from '@/lib/shared/teams';
@@ -53,12 +53,17 @@ export async function enrolCrew(ev: EventSecrets, crew: Bot[]) {
 }
 
 /** The critical issue a new demo visitor practises on (only one open at a time). */
+const BARRIER = 'Barrier B bowing, crowd pushing';
+
 export async function kickoff(ev: EventSecrets) {
-  const open = (await listIssues(ev.id)).find((i) => i.team === 'security' && i.severity === 'critical' && i.status === 'new');
-  if (open) return open.id;
   const v = bot('dm_vikram');
+  const barrier = (await listIssues(ev.id)).filter((i) => i.title === BARRIER && i.status !== 'resolved');
+  const fresh = barrier.find((i) => i.status === 'new');
+  // Close older copies (taken by earlier visitors) so there is only ever one barrier issue.
+  await Promise.all(barrier.filter((i) => i !== fresh).map((i) => updateIssue(i.id, i.status, 'resolved', i.assigneeId ?? v.id)));
+  if (fresh) return fresh.id;
   const r = await raiseIssue(ev, {
-    team: 'security', title: 'Barrier B bowing, crowd pushing', note: 'Left of the speaker stack. Need 2 more hands now.',
+    team: 'security', title: BARRIER, note: 'Left of the speaker stack. Need 2 more hands now.',
     severity: 'critical', placeId: 'barrier', reporterId: v.id, reporterName: v.name,
   });
   return r.id;
@@ -101,6 +106,8 @@ export async function tick(ev: EventSecrets, origin: string) {
   if (line.kind === 'text') await say(ev, who, line.team, line.text);
   else if (line.kind === 'voice') await voice(ev, who, line.team, line.clip, origin);
   else if (line.kind === 'issue') {
+    // Don't stack copies: skip if the same issue is still open from the last loop.
+    if ((await listIssues(ev.id)).some((i) => i.title === line.title && i.status !== 'resolved')) return { posted: false };
     const places = await listPlaces(ev.id);
     await raiseIssue(ev, { team: line.team, title: line.title, note: line.note, severity: line.severity,
       placeId: line.place && places.some((p) => p.id === line.place) ? line.place : null, reporterId: who.id, reporterName: who.name });

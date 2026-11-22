@@ -68,7 +68,7 @@ export function Tasks({ state, now, slug, viewer, onOpenChat, onChanged, onIssue
                 <li key={id} className="rounded-[24px] bg-[#251856] p-3.5">
                   <div className="flex items-center gap-2.5">
                     <Face name={p.name} size={34} />
-                    <p className="flex-1 font-display text-[17px] font-bold">{id === me ? 'You' : firstName(p.name)}</p>
+                    <p className="flex-1 font-display text-[17px] font-bold">{id === me ? 'You' : /^(You|Guest) · /.test(p.name) ? 'Guest' : firstName(p.name)}</p>
                     <span className="rounded-full bg-white/[0.08] px-2.5 py-1 text-xs font-semibold text-[#CFC4F5]">{p.tasks.length} task{p.tasks.length > 1 ? 's' : ''}</span>
                   </div>
                   <ul className="mt-2.5 space-y-2">
